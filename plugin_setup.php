@@ -5,7 +5,7 @@ if (!isset($pluginName) || $pluginName !== 'FPPPushoverNotifications') {
     return;
 }
 
-$pluginVersion = '0.3.0';
+$pluginVersion = '0.3.1';
 $settingKeys = array('RemoteFalconEnabled', 'ShowStartEnabled', 'ShowEndEnabled', 'MainShowPlaylist', 'PushoverUserKey', 'PushoverApiToken');
 $defaults = array(
     'RemoteFalconEnabled' => '1',
@@ -75,14 +75,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['clearNotificationHist
     } elseif ($userKey === '' && $apiToken === '' && $currentUserKey === '' && $currentApiToken === '') {
         $saveError = 'Enter your Pushover User Key and API Token.';
     } else {
-        if ($userKey !== '') WriteSettingToFile('PushoverUserKey', $userKey, $pluginName);
-        if ($apiToken !== '') WriteSettingToFile('PushoverApiToken', $apiToken, $pluginName);
+        $userWriteResult = true;
+        $tokenWriteResult = true;
+        if ($userKey !== '') {
+            $result = WriteSettingToFile('PushoverUserKey', $userKey, $pluginName);
+            if ($result === false) $userWriteResult = false;
+        }
+        if ($apiToken !== '') {
+            $result = WriteSettingToFile('PushoverApiToken', $apiToken, $pluginName);
+            if ($result === false) $tokenWriteResult = false;
+        }
+
+        // Older FPP builds may not return a status from WriteSettingToFile(),
+        // so verify the stored values by reading them back as well.
         $savedUserKey = (string)ReadSettingFromFile('PushoverUserKey', $pluginName);
         $savedApiToken = (string)ReadSettingFromFile('PushoverApiToken', $pluginName);
-        if ($savedUserKey !== '' && $savedApiToken !== '') {
+        $userSaved = ($savedUserKey !== '' && ($userKey === '' || hash_equals($userKey, $savedUserKey)));
+        $tokenSaved = ($savedApiToken !== '' && ($apiToken === '' || hash_equals($apiToken, $savedApiToken)));
+
+        if ($userSaved && $tokenSaved && $userWriteResult && $tokenWriteResult) {
             $saveMessage = 'Pushover credentials saved. Use Send Test Notification to verify them.';
         } else {
-            $saveError = 'FPP could not verify both Pushover credentials were saved. Check plugin configuration file permissions.';
+            $missing = array();
+            if (!$userSaved || !$userWriteResult) $missing[] = 'User Key';
+            if (!$tokenSaved || !$tokenWriteResult) $missing[] = 'API Token';
+            $saveError = 'FPP could not save or verify: ' . implode(' and ', $missing) . '. No credential values are shown. Check the FPP plugin configuration file and web-server permissions.';
         }
     }
 } elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['saveNotificationSettings'])) {
