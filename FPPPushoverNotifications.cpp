@@ -15,6 +15,7 @@
 #include <vector>
 #include <unordered_map>
 #include <cerrno>
+#include <cstring>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -131,9 +132,11 @@ void sendPushoverNotification(const std::string& title,
     }
 
     if (userKey.empty() || apiToken.empty()) {
-        appendLog("PUSHOVER SKIPPED | credentials are not configured");
+        appendLog("PUSHOVER SKIPPED | credentials are not configured | config=" + path);
         return;
     }
+
+    appendLog("PUSHOVER ATTEMPT | title=" + title + " | credentials=loaded");
 
     const pid_t child = fork();
     if (child < 0) {
@@ -186,7 +189,10 @@ void sendPushoverNotification(const std::string& title,
             argv.push_back(const_cast<char*>(argument.c_str()));
         argv.push_back(nullptr);
 
+        // FPP daemon PATH may not include curl; try the standard Debian path too.
         execvp("curl", argv.data());
+        execv("/usr/bin/curl", argv.data());
+        dprintf(STDERR_FILENO, "CURL EXEC FAILED | errno=%d | %s\\n", errno, strerror(errno));
         _exit(127);
     }
 
