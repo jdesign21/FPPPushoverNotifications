@@ -3,6 +3,11 @@ set -euo pipefail
 
 : "${FPPDIR:=/opt/fpp}"
 
+# FPP common expects LD_LIBRARY_PATH to exist. With nounset enabled (-u),
+# sourcing common fails on systems where the variable is not already set.
+: "${LD_LIBRARY_PATH:=}"
+export LD_LIBRARY_PATH
+
 if [ ! -f "${FPPDIR}/scripts/common" ]; then
     echo "FPP common script not found at ${FPPDIR}/scripts/common" >&2
     exit 1
