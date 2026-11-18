@@ -5,7 +5,7 @@ if (!isset($pluginName) || $pluginName !== 'FPPPushoverNotifications') {
     return;
 }
 
-$pluginVersion = '0.3.5';
+$pluginVersion = '0.3.6';
 $settingKeys = array('RemoteFalconEnabled', 'ShowStartEnabled', 'ShowEndEnabled', 'MainShowPlaylist', 'AutoRefreshEnabled', 'PushoverUserKey', 'PushoverApiToken');
 $defaults = array(
     'RemoteFalconEnabled' => '1',
@@ -144,6 +144,9 @@ foreach ($settingKeys as $key) {
     $value = ReadSettingFromFile($key, $pluginName);
     $settings[$key] = ($value === false) ? $defaults[$key] : $value;
 }
+// Determine credential status directly from the same persisted settings used by the test action.
+$pushoverUserKeyConfigured = trim((string)ReadSettingFromFile('PushoverUserKey', $pluginName)) !== '';
+$pushoverApiTokenConfigured = trim((string)ReadSettingFromFile('PushoverApiToken', $pluginName)) !== '';
 $logExists = is_file($logFile);
 $logReadable = $logExists && is_readable($logFile);
 $allLines = ($logReadable) ? @file($logFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) : array();
@@ -304,12 +307,12 @@ function pushover_event_detail($line) {
                 <div class="po-field">
                     <label for="pushoverUserKey">Pushover User Key</label>
                     <input class="po-input" type="password" id="pushoverUserKey" name="PushoverUserKey" maxlength="128" placeholder="Enter a new User Key" autocomplete="new-password">
-                    <?php if ((string)$settings['PushoverUserKey'] !== ''): ?><div class="po-setting-desc" style="color:#187447">Saved and configured — <?php echo pushover_h(str_repeat('•', 8)); ?></div><?php else: ?><div class="po-setting-desc">Not configured</div><?php endif; ?>
+                    <?php if ($pushoverUserKeyConfigured): ?><div class="po-setting-desc" style="color:#187447">Saved and configured — <?php echo pushover_h(str_repeat('•', 8)); ?></div><?php else: ?><div class="po-setting-desc">Not configured</div><?php endif; ?>
                 </div>
                 <div class="po-field">
                     <label for="pushoverApiToken">Pushover API Token</label>
                     <input class="po-input" type="password" id="pushoverApiToken" name="PushoverApiToken" maxlength="128" placeholder="Enter a new API Token" autocomplete="new-password">
-                    <?php if ((string)$settings['PushoverApiToken'] !== ''): ?><div class="po-setting-desc" style="color:#187447">Saved and configured — <?php echo pushover_h(str_repeat('•', 8)); ?></div><?php else: ?><div class="po-setting-desc">Not configured</div><?php endif; ?>
+                    <?php if ($pushoverApiTokenConfigured): ?><div class="po-setting-desc" style="color:#187447">Saved and configured — <?php echo pushover_h(str_repeat('•', 8)); ?></div><?php else: ?><div class="po-setting-desc">Not configured</div><?php endif; ?>
                 </div>
             </div>
             <div class="po-actions">
