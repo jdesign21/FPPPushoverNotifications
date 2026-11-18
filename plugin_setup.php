@@ -5,7 +5,7 @@ if (!isset($pluginName) || $pluginName !== 'FPPPushoverNotifications') {
     return;
 }
 
-$pluginVersion = '0.2.3';
+$pluginVersion = '0.2.4';
 $settingKeys = array('RemoteFalconEnabled', 'ShowStartEnabled', 'ShowEndEnabled', 'MainShowPlaylist');
 $defaults = array(
     'RemoteFalconEnabled' => '1',
@@ -27,12 +27,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['saveNotificationSetti
         preg_match('/[\r\n=]/', $values['MainShowPlaylist'])) {
         $saveError = 'Enter a valid main show playlist name (1–128 characters).';
     } else {
+        // FPP 9.3's WriteSettingToFile() does not return a success value.
+        // Calling it inside a boolean test always reports failure (NULL is false).
+        // Write each setting, then verify the persisted value by reading it back.
+        foreach ($values as $key => $value) {
+            WriteSettingToFile($key, $value, $pluginName);
+        }
+
         $saved = true;
         foreach ($values as $key => $value) {
-            if (!WriteSettingToFile($key, $value, $pluginName)) $saved = false;
+            $persisted = ReadSettingFromFile($key, $pluginName);
+            if ($persisted === false || (string)$persisted !== (string)$value) {
+                $saved = false;
+                break;
+            }
         }
-        if ($saved) $saveMessage = 'Notification settings saved.';
-        else $saveError = 'FPP could not save the settings. Check the FPP configuration file permissions.';
+
+        if ($saved) {
+            $saveMessage = 'Notification settings saved.';
+        } else {
+            $saveError = 'FPP could not verify the saved settings. Check permissions for the FPP plugin configuration file.';
+        }
     }
 }
 
