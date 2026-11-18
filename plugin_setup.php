@@ -5,7 +5,7 @@ if (!isset($pluginName) || $pluginName !== 'FPPPushoverNotifications') {
     return;
 }
 
-$pluginVersion = '0.3.3';
+$pluginVersion = '0.3.4';
 $settingKeys = array('RemoteFalconEnabled', 'ShowStartEnabled', 'ShowEndEnabled', 'MainShowPlaylist', 'PushoverUserKey', 'PushoverApiToken');
 $defaults = array(
     'RemoteFalconEnabled' => '1',
@@ -250,7 +250,6 @@ function pushover_event_detail($line) {
 </style>
 
 <div id="pushover-page">
-    <?php if ($_SERVER['REQUEST_METHOD'] !== 'POST'): ?><meta http-equiv="refresh" content="10"><?php endif; ?>
     <div class="po-hero">
         <div><h2>Pushover Notifications</h2><p>FPP Notification Center</p></div>
         <span class="po-version">Version <?php echo pushover_h($pluginVersion); ?></span>
@@ -293,16 +292,18 @@ function pushover_event_detail($line) {
 
     <div class="po-section">Pushover Account</div>
     <div class="po-card">
-        <p class="po-secret-note">Enter your Pushover User Key and Application API Token. Credentials are stored in this FPP plugin's local configuration file and are never displayed after saving. Leave a field blank to keep its existing value.</p>
+        <p class="po-secret-note">Enter your Pushover User Key and Application API Token. Credentials are stored locally and never shown in full. A masked saved indicator appears below each field. Leave a field blank to keep its existing value.</p>
         <form method="post" action="" autocomplete="off">
             <div class="po-credential-grid">
                 <div class="po-field">
                     <label for="pushoverUserKey">Pushover User Key</label>
-                    <input class="po-input" type="password" id="pushoverUserKey" name="PushoverUserKey" maxlength="128" placeholder="<?php echo ((string)$settings['PushoverUserKey'] !== '') ? 'Saved — enter a new key to replace' : 'Enter your User Key'; ?>" autocomplete="new-password">
+                    <input class="po-input" type="password" id="pushoverUserKey" name="PushoverUserKey" maxlength="128" placeholder="Enter a new User Key" autocomplete="new-password">
+                    <?php if ((string)$settings['PushoverUserKey'] !== ''): ?><div class="po-setting-desc" style="color:#187447">Saved and configured — <?php echo pushover_h(str_repeat('•', 8)); ?></div><?php else: ?><div class="po-setting-desc">Not configured</div><?php endif; ?>
                 </div>
                 <div class="po-field">
                     <label for="pushoverApiToken">Pushover API Token</label>
-                    <input class="po-input" type="password" id="pushoverApiToken" name="PushoverApiToken" maxlength="128" placeholder="<?php echo ((string)$settings['PushoverApiToken'] !== '') ? 'Saved — enter a new token to replace' : 'Enter your API Token'; ?>" autocomplete="new-password">
+                    <input class="po-input" type="password" id="pushoverApiToken" name="PushoverApiToken" maxlength="128" placeholder="Enter a new API Token" autocomplete="new-password">
+                    <?php if ((string)$settings['PushoverApiToken'] !== ''): ?><div class="po-setting-desc" style="color:#187447">Saved and configured — <?php echo pushover_h(str_repeat('•', 8)); ?></div><?php else: ?><div class="po-setting-desc">Not configured</div><?php endif; ?>
                 </div>
             </div>
             <div class="po-actions">
@@ -346,5 +347,5 @@ function pushover_event_detail($line) {
         <?php endforeach; endif; ?>
     </div>
 
-    <div class="po-footer">Dashboard refreshes every 10 seconds. Event tracking is local to this FPP player. RemoteFalcon song selections are sent automatically to Pushover when enabled. Show start/end tracking is currently local history only.</div>
+    <div class="po-footer">Dashboard does not automatically refresh, so forms and copied text stay in place. Refresh the page manually to see new events. Event tracking is local to this FPP player. RemoteFalcon song selections are sent automatically to Pushover when enabled. Show start/end tracking is currently local history only.</div>
 </div>
