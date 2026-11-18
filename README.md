@@ -8,15 +8,15 @@ In FPP, open **Content Setup → Plugin Manager** and use this manifest URL:
 
 `https://raw.githubusercontent.com/jdesign21/FPPPushoverNotifications/main/pluginInfo.json`
 
-The FPP install script registers the native callback handler and builds the C++ shared library against the installed FPP source tree. The dedicated `scripts/fpp_upgrade.sh` runs the same build after Plugin Manager pulls new code. It respects FPP's reload hand-off so the update does not trigger a competing FPPD restart. Updates should be performed in place through FPP Plugin Manager; there should be no need to uninstall/reinstall or run Git/Make manually.
+The FPP install script registers the native callback handler and builds the C++ shared library against the installed FPP source tree. Updates should be performed in place through FPP Plugin Manager; there should be no need to uninstall/reinstall or run Git/Make manually.
 
-## Current milestone
+## Current milestone (0.2.2)
 
 The current build monitors native FPP playlist-start and media-change callbacks. When a playlist starts or FPP changes media, the plugin writes a timestamped entry (including available song title and artist) to:
 
 `/home/fpp/media/logs/plugin-FPPPushoverNotifications.log`
 
-Pushover delivery and credential settings are not enabled in this milestone. Media callback payloads are logged temporarily so the RemoteFalcon-origin field can be identified and filtered in the next step. No MQTT, Node-RED, broker, or external notification request is used.
+Pushover delivery and credential settings are not enabled in this milestone. RemoteFalcon song selections are filtered by playlist origin and duplicate title/artist callbacks received within five seconds are suppressed. The same song can be counted again after that window. No MQTT, Node-RED, broker, or external notification request is used.
 
 ## Configuration page
 
