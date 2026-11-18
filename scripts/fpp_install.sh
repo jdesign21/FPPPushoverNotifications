@@ -32,8 +32,11 @@ fi
 
 cd "${PLUGIN_DIR}"
 
-# FPP discovers and loads the C++ library through callbacks.sh.
-chmod 755 callbacks.sh
+# FPP 9.3 updates with a plain git pull. Ignore local executable-bit drift
+# so build/install operations cannot leave the checkout dirty and block updates.
+git config core.fileMode false
+
+# callbacks.sh is committed executable in Git; do not chmod a tracked file here.
 CALLBACK_TYPES="$(./callbacks.sh --list)"
 if [ "${CALLBACK_TYPES}" != "c++" ]; then
     echo "callbacks.sh did not register the C++ plugin (returned: ${CALLBACK_TYPES})" >&2
