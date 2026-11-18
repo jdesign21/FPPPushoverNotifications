@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <chrono>
 #include <cstdlib>
 #include <ctime>
 #include <fstream>
@@ -12,11 +13,14 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <unordered_map>
 
 namespace {
 std::mutex logMutex;
 std::mutex playlistStateMutex;
 std::vector<std::string> playlistStack;
+std::mutex songDedupMutex;
+std::unordered_map<std::string, std::chrono::steady_clock::time_point> recentSongEvents;
 
 struct PluginSettings {
     bool remoteFalconEnabled = true;
@@ -109,6 +113,28 @@ void logMediaChange(const Json::Value& playlist,
     // Other media changes remain diagnostic-only and are never counted as requests.
     if (settings.remoteFalconEnabled &&
         playlistName(playlist) == "RemoteFalcon") {
+        // FPP may deliver the same media selection callback more than once.
+        // Suppress an identical title/artist pair for five seconds, while
+        // allowing the same song to be selected again later.
+        const std::string songKey = mediaDetails.title + "|" + mediaDetails.artist;
+        const auto now = std::chrono::steady_clock::now();
+        {
+            std::lock_guard<std::mutex> lock(songDedupMutex);
+            for (auto it = recentSongEvents.begin(); it != recentSongEvents.end();) {
+                if (now - it->second > std::chrono::seconds(5))
+                    it = recentSongEvents.erase(it);
+                else
+                    ++it;
+            }
+
+            const auto previous = recentSongEvents.find(songKey);
+            if (previous != recentSongEvents.end() &&
+                now - previous->second <= std::chrono::seconds(5)) {
+                return;
+            }
+            recentSongEvents[songKey] = now;
+        }
+
         std::ostringstream line;
         line << "REMOTE FALCON SONG SELECTED"
              << " | title=" << mediaDetails.title
