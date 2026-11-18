@@ -10,7 +10,7 @@ In FPP, open **Content Setup → Plugin Manager** and use this manifest URL:
 
 The FPP install script registers the native callback handler and builds the C++ shared library against the installed FPP source tree. On FPP 9.3, the callback dispatcher is stored as executable in Git and the installer disables Git file-mode drift tracking. This prevents the install script from making the checkout appear modified and blocking later `git pull` updates.
 
-## Current milestone (0.3.4)
+## Current milestone (0.3.5)
 
 The current build monitors native FPP playlist-start and media-change callbacks. When a playlist starts or FPP changes media, the plugin writes a timestamped entry (including available song title and artist) to:
 
@@ -30,9 +30,13 @@ Open **Content Setup → Pushover Notifications** to configure Pushover credenti
 The native library is rebuilt by `scripts/fpp_install.sh` during plugin installation and updates.
 
 
+### 0.3.5
+- Adds an optional automatic dashboard refresh setting, disabled by default.
+- When enabled, the dashboard refreshes every 30 seconds and pauses while a form field is being edited.
+
 ### 0.3.4
 - Shows a masked configured indicator for each saved Pushover credential without revealing the secret value.
-- Removes the automatic 10-second page refresh so copying, pasting, and editing forms are not interrupted.
+- Removes the forced 10-second page refresh; automatic refresh can now be enabled or disabled in the dashboard settings.
 
 ### 0.3.3
 - Reworked automatic Pushover delivery to invoke curl with direct argument passing instead of a piped curl configuration.
