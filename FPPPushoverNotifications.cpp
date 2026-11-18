@@ -192,7 +192,7 @@ void sendPushoverNotification(const std::string& title,
         // FPP daemon PATH may not include curl; try the standard Debian path too.
         execvp("curl", argv.data());
         execv("/usr/bin/curl", argv.data());
-        dprintf(STDERR_FILENO, "CURL EXEC FAILED | errno=%d | %s\\n", errno, strerror(errno));
+        dprintf(STDERR_FILENO, "CURL EXEC FAILED | errno=%d | %s\n", errno, strerror(errno));
         _exit(127);
     }
 
