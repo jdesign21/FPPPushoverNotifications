@@ -2,7 +2,7 @@
   "repoName": "FPPPushoverNotifications",
   "name": "FPP Pushover Notifications",
   "author": "Juan Melendrez",
-  "description": "Tracks RemoteFalcon song selections and main show start/end events, with configurable event settings and a dashboard.",
+  "description": "Tracks RemoteFalcon song selections and main show start/end events, with configurable event settings, a dashboard, and reliable in-place Plugin Manager updates.",
   "homeURL": "https://github.com/jdesign21/FPPPushoverNotifications",
   "srcURL": "https://github.com/jdesign21/FPPPushoverNotifications.git",
   "bugURL": "https://github.com/jdesign21/FPPPushoverNotifications/issues",
