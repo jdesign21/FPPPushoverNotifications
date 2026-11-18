@@ -8,14 +8,14 @@
   "bugURL": "https://github.com/jdesign21/FPPPushoverNotifications/issues",
   "releaseNotesStyle": "gitHistory",
   "privacy": {
-    "summary": "The plugin stores local notification preferences, Pushover credentials, and detected RemoteFalcon song selections and main show start/end events. The configuration page can send a test notification to Pushover. Automatic event-triggered notifications are not yet enabled.",
+    "summary": "The plugin stores local notification preferences, Pushover credentials, and detected RemoteFalcon song selections and main show start/end events. The configuration page can send a test notification to Pushover. When RemoteFalcon song notifications are enabled and credentials are configured, detected RemoteFalcon song selections are sent to Pushover automatically.",
     "sends": [
       {
         "what": "Test notification message and Pushover authentication credentials",
         "to": "Pushover API",
         "about": "operator",
-        "when": "Only when the operator clicks Send Test Notification",
-        "purpose": "Verify Pushover credentials and HTTPS connectivity"
+        "when": "When the operator clicks Send Test Notification, and automatically when an enabled RemoteFalcon song selection is detected",
+        "purpose": "Verify Pushover credentials and HTTPS connectivity, and notify the operator of RemoteFalcon song selections"
       }
     ],
     "collects": [
@@ -38,7 +38,7 @@
     "remoteAccess": "none",
     "systemChanges": [],
     "closedCode": false,
-    "other": "Pushover credentials are stored in the local FPP plugin configuration file and are not displayed back in the web interface. The test action sends one HTTPS request to api.pushover.net. No automatic event notifications are sent in this milestone."
+    "other": "Pushover credentials are stored in the local FPP plugin configuration file and are not displayed back in the web interface. The test action sends an HTTPS request to api.pushover.net. Enabled RemoteFalcon song selections also send HTTPS notifications to api.pushover.net. Show start/end events remain local-only."
   },
   "versions": [
     {
