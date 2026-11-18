@@ -1,0 +1,28 @@
+{
+  "repoName": "FPPPushoverNotifications",
+  "name": "FPP Pushover Notifications",
+  "author": "Juan Melendrez",
+  "description": "Sends configurable FPP playlist notifications to Pushover.",
+  "homeURL": "https://github.com/jdesign21/FPPPushoverNotifications",
+  "srcURL": "https://github.com/jdesign21/FPPPushoverNotifications.git",
+  "bugURL": "https://github.com/jdesign21/FPPPushoverNotifications/issues",
+  "allowUpdates": 1,
+  "versions": [
+    {
+      "minFPPVersion": "9.3",
+      "maxFPPVersion": "9.99",
+      "branch": "main",
+      "sha": ""
+    }
+  ],
+  "privacy": {
+    "summary": "Initial callback test only. Runs locally on the FPP player and records playlist-start events in a local log. Does not send data to an external service.",
+    "sends": [],
+    "collects": [],
+    "sensors": [],
+    "remoteAccess": "none",
+    "systemChanges": [],
+    "closedCode": false,
+    "other": "Pushover integration will be added in a later version and will disclose the Pushover data transmission."
+  }
+}
