@@ -5,13 +5,14 @@ if (!isset($pluginName) || $pluginName !== 'FPPPushoverNotifications') {
     return;
 }
 
-$pluginVersion = '0.3.4';
-$settingKeys = array('RemoteFalconEnabled', 'ShowStartEnabled', 'ShowEndEnabled', 'MainShowPlaylist', 'PushoverUserKey', 'PushoverApiToken');
+$pluginVersion = '0.3.5';
+$settingKeys = array('RemoteFalconEnabled', 'ShowStartEnabled', 'ShowEndEnabled', 'MainShowPlaylist', 'AutoRefreshEnabled', 'PushoverUserKey', 'PushoverApiToken');
 $defaults = array(
     'RemoteFalconEnabled' => '1',
     'ShowStartEnabled' => '1',
     'ShowEndEnabled' => '1',
     'MainShowPlaylist' => 'Light Show',
+    'AutoRefreshEnabled' => '0',
     'PushoverUserKey' => '',
     'PushoverApiToken' => ''
 );
@@ -107,7 +108,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['clearNotificationHist
         'RemoteFalconEnabled' => isset($_POST['RemoteFalconEnabled']) ? '1' : '0',
         'ShowStartEnabled' => isset($_POST['ShowStartEnabled']) ? '1' : '0',
         'ShowEndEnabled' => isset($_POST['ShowEndEnabled']) ? '1' : '0',
-        'MainShowPlaylist' => isset($_POST['MainShowPlaylist']) ? trim($_POST['MainShowPlaylist']) : 'Light Show'
+        'MainShowPlaylist' => isset($_POST['MainShowPlaylist']) ? trim($_POST['MainShowPlaylist']) : 'Light Show',
+        'AutoRefreshEnabled' => isset($_POST['AutoRefreshEnabled']) ? '1' : '0'
     );
     if ($values['MainShowPlaylist'] === '' || strlen($values['MainShowPlaylist']) > 128 ||
         preg_match('/[\r\n=]/', $values['MainShowPlaylist'])) {
@@ -286,6 +288,10 @@ function pushover_event_detail($line) {
                 <div class="po-setting-desc">Only this playlist will count as your show starting or ending.</div>
                 <input class="po-input" id="mainShowPlaylist" name="MainShowPlaylist" maxlength="128" value="<?php echo pushover_h($settings['MainShowPlaylist']); ?>">
             </div>
+            <div class="po-setting" style="margin-top:16px;border-top:1px solid #edf0f4">
+                <div><div class="po-setting-title">Automatic dashboard refresh</div><div class="po-setting-desc">Refresh the dashboard every 30 seconds to show the latest event history. Refresh pauses while you are editing a form field.</div></div>
+                <label class="po-toggle"><input type="checkbox" name="AutoRefreshEnabled" value="1"<?php echo pushover_checked($settings['AutoRefreshEnabled']); ?>><span></span></label>
+            </div>
             <button class="po-save" type="submit" name="saveNotificationSettings" value="1">Save Settings</button>
         </form>
     </div>
@@ -347,5 +353,29 @@ function pushover_event_detail($line) {
         <?php endforeach; endif; ?>
     </div>
 
-    <div class="po-footer">Dashboard does not automatically refresh, so forms and copied text stay in place. Refresh the page manually to see new events. Event tracking is local to this FPP player. RemoteFalcon song selections are sent automatically to Pushover when enabled. Show start/end tracking is currently local history only.</div>
+    <div class="po-footer"><?php echo pushover_checked($settings['AutoRefreshEnabled']) !== '' ? 'Automatic refresh is enabled (30 seconds). It pauses while a form field is active.' : 'Automatic refresh is disabled. Refresh the page manually to see new events.'; ?> Event tracking is local to this FPP player. RemoteFalcon song selections are sent automatically to Pushover when enabled. Show start/end tracking is currently local history only.</div>
+
+<?php if (pushover_checked($settings['AutoRefreshEnabled']) !== ''): ?>
+<script>
+(function () {
+    function scheduleDashboardRefresh() {
+        window.setTimeout(function () {
+            var active = document.activeElement;
+            var editing = active && (
+                active.tagName === 'INPUT' ||
+                active.tagName === 'TEXTAREA' ||
+                active.tagName === 'SELECT' ||
+                active.isContentEditable
+            );
+            if (editing) {
+                scheduleDashboardRefresh();
+                return;
+            }
+            window.location.href = window.location.pathname + window.location.search;
+        }, 30000);
+    }
+    scheduleDashboardRefresh();
+})();
+</script>
+<?php endif; ?>
 </div>
