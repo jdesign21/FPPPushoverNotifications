@@ -133,7 +133,7 @@ function pushover_event_detail($line) {
 </style>
 
 <div id="pushover-page">
-    <meta http-equiv="refresh" content="10">
+    <?php if ($_SERVER['REQUEST_METHOD'] !== 'POST'): ?><meta http-equiv="refresh" content="10"><?php endif; ?>
     <div class="po-hero">
         <div><h2>Pushover Notifications</h2><p>FPP Notification Center</p></div>
         <span class="po-version">Version <?php echo pushover_h($pluginVersion); ?></span>
