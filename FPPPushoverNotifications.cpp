@@ -168,6 +168,8 @@ void handlePlaylistEvent(const Json::Value& playlist,
     }
 }
 
+}
+
 class FPPPushoverNotifications : public FPPPlugin {
 public:
     FPPPushoverNotifications() : FPPPlugin("FPPPushoverNotifications") {}
