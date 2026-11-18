@@ -272,8 +272,11 @@ void handlePlaylistEvent(const Json::Value& playlist,
             std::lock_guard<std::mutex> lock(playlistStateMutex);
             playlistStack.push_back(name);
         }
-        if (!name.empty() && name == settings.mainShowPlaylist && settings.showStartEnabled)
+        if (!name.empty() && name == settings.mainShowPlaylist && settings.showStartEnabled) {
             appendLog("SHOW STARTED | playlist=" + name);
+            sendPushoverNotification("Show Started",
+                "Your " + name + " playlist has started.");
+        }
         return;
     }
 
@@ -294,6 +297,8 @@ void handlePlaylistEvent(const Json::Value& playlist,
             stoppedPlaylist == settings.mainShowPlaylist &&
             settings.showEndEnabled) {
             appendLog("SHOW ENDED | playlist=" + stoppedPlaylist);
+            sendPushoverNotification("Show Ended",
+                "Your " + stoppedPlaylist + " playlist has ended.");
         }
     }
 }
