@@ -10,17 +10,17 @@ In FPP, open **Content Setup → Plugin Manager** and use this manifest URL:
 
 The FPP install script registers the native callback handler and builds the C++ shared library against the installed FPP source tree. On FPP 9.3, the callback dispatcher is stored as executable in Git and the installer disables Git file-mode drift tracking. This prevents the install script from making the checkout appear modified and blocking later `git pull` updates.
 
-## Current milestone (0.2.5)
+## Current milestone (0.3.0)
 
 The current build monitors native FPP playlist-start and media-change callbacks. When a playlist starts or FPP changes media, the plugin writes a timestamped entry (including available song title and artist) to:
 
 `/home/fpp/media/logs/plugin-FPPPushoverNotifications.log`
 
-Pushover delivery and credential settings are not enabled in this milestone. RemoteFalcon song selections are filtered by playlist origin and duplicate title/artist callbacks received within five seconds are suppressed. The same song can be counted again after that window. No MQTT, Node-RED, broker, or external notification request is used.
+The configuration page now stores the Pushover User Key and API Token locally in the FPP plugin settings and provides a test-notification button. The test button sends a single HTTPS request to Pushover's message API; automatic event-triggered notifications are not yet connected. RemoteFalcon song selections are filtered by playlist origin and duplicate title/artist callbacks received within five seconds are suppressed. The same song can be counted again after that window. No MQTT, Node-RED, broker, or external notification request is used.
 
 ## Configuration page
 
-Open **Content Setup → Pushover Notifications** to view plugin status and the playlist event log.
+Open **Content Setup → Pushover Notifications** to configure Pushover credentials, send a test notification, view plugin status, and manage the playlist event log. Credentials are not displayed after saving; leave a credential field blank to retain its saved value.
 
 ## Compatibility
 
@@ -29,6 +29,11 @@ Open **Content Setup → Pushover Notifications** to view plugin status and the 
 
 The native library is rebuilt by `scripts/fpp_install.sh` during plugin installation and updates.
 
+
+### 0.3.0
+- Added local Pushover User Key and API Token configuration.
+- Added a test-notification action using HTTPS with certificate verification and a 20-second request timeout.
+- Credentials are never echoed back into the configuration page.
 
 ### 0.2.5
 - Compact notification history rows and added a confirmation-protected Clear History action that empties the plugin event log.
