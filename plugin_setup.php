@@ -5,7 +5,7 @@ if (!isset($pluginName) || $pluginName !== 'FPPPushoverNotifications') {
     return;
 }
 
-$pluginVersion = '0.3.9';
+$pluginVersion = '0.4.0';
 $settingKeys = array('RemoteFalconEnabled', 'ShowStartEnabled', 'ShowEndEnabled', 'MainShowPlaylist', 'AutoRefreshEnabled', 'PushoverUserKey', 'PushoverApiToken');
 $defaults = array(
     'RemoteFalconEnabled' => '1',
@@ -315,12 +315,12 @@ function pushover_event_detail($line) {
             <div class="po-credential-grid">
                 <div class="po-field">
                     <label for="pushoverUserKey">Pushover User Key</label>
-                    <input class="po-input" type="password" id="pushoverUserKey" name="PushoverUserKey" maxlength="128" value="<?php echo pushover_h($settings['PushoverUserKey']); ?>" placeholder="Enter a new User Key" autocomplete="new-password">
+                    <input class="po-input" type="password" id="pushoverUserKey" name="PushoverUserKey" maxlength="128" value="" placeholder="<?php echo $pushoverUserKeyConfigured ? 'Leave blank to keep saved key' : 'Enter a User Key'; ?>" autocomplete="new-password">
                     <?php if ($pushoverUserKeyConfigured): ?><div class="po-setting-desc" style="color:#187447">Saved and configured — <?php echo pushover_h(str_repeat('•', 8)); ?></div><?php else: ?><div class="po-setting-desc">Not configured</div><?php endif; ?>
                 </div>
                 <div class="po-field">
                     <label for="pushoverApiToken">Pushover API Token</label>
-                    <input class="po-input" type="password" id="pushoverApiToken" name="PushoverApiToken" maxlength="128" value="<?php echo pushover_h($settings['PushoverApiToken']); ?>" placeholder="Enter a new API Token" autocomplete="new-password">
+                    <input class="po-input" type="password" id="pushoverApiToken" name="PushoverApiToken" maxlength="128" value="" placeholder="<?php echo $pushoverApiTokenConfigured ? 'Leave blank to keep saved token' : 'Enter an API Token'; ?>" autocomplete="new-password">
                     <?php if ($pushoverApiTokenConfigured): ?><div class="po-setting-desc" style="color:#187447">Saved and configured — <?php echo pushover_h(str_repeat('•', 8)); ?></div><?php else: ?><div class="po-setting-desc">Not configured</div><?php endif; ?>
                 </div>
             </div>
