@@ -2,14 +2,22 @@
   "repoName": "FPPPushoverNotifications",
   "name": "FPP Pushover Notifications",
   "author": "Juan Melendrez",
-  "description": "Tracks RemoteFalcon song selections and main show start/end events, with configurable event settings, a dashboard, and duplicate-suppressed RemoteFalcon song tracking and FPP 9.3-compatible Plugin Manager updates.",
+  "description": "Tracks RemoteFalcon song selections and main show start/end events, with configurable event settings, local Pushover credentials, a test-notification tool, a dashboard, and duplicate-suppressed event tracking.",
   "homeURL": "https://github.com/jdesign21/FPPPushoverNotifications",
   "srcURL": "https://github.com/jdesign21/FPPPushoverNotifications.git",
   "bugURL": "https://github.com/jdesign21/FPPPushoverNotifications/issues",
   "releaseNotesStyle": "gitHistory",
   "privacy": {
-    "summary": "The plugin stores local notification preferences and records detected RemoteFalcon song selections and main show start/end events in the FPP media log. This milestone does not send requests to Pushover.",
-    "sends": [],
+    "summary": "The plugin stores local notification preferences, Pushover credentials, and detected RemoteFalcon song selections and main show start/end events. The configuration page can send a test notification to Pushover. Automatic event-triggered notifications are not yet enabled.",
+    "sends": [
+      {
+        "what": "Test notification message and Pushover authentication credentials",
+        "to": "Pushover API",
+        "about": "operator",
+        "when": "Only when the operator clicks Send Test Notification",
+        "purpose": "Verify Pushover credentials and HTTPS connectivity"
+      }
+    ],
     "collects": [
       {
         "what": "Local event history and notification preferences",
@@ -17,13 +25,20 @@
         "keptDays": null,
         "canDelete": true,
         "where": "/home/fpp/media/logs/plugin-FPPPushoverNotifications.log and /home/fpp/media/config/plugin.FPPPushoverNotifications"
+      },
+      {
+        "what": "Pushover User Key and API Token",
+        "about": "operator",
+        "keptDays": null,
+        "canDelete": true,
+        "where": "/home/fpp/media/config/plugin.FPPPushoverNotifications"
       }
     ],
     "sensors": [],
     "remoteAccess": "none",
     "systemChanges": [],
     "closedCode": false,
-    "other": "No requests are sent to Pushover in this milestone. Notification credentials are not stored."
+    "other": "Pushover credentials are stored in the local FPP plugin configuration file and are not displayed back in the web interface. The test action sends one HTTPS request to api.pushover.net. No automatic event notifications are sent in this milestone."
   },
   "versions": [
     {
