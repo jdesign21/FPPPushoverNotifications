@@ -5,7 +5,7 @@ if (!isset($pluginName) || $pluginName !== 'FPPPushoverNotifications') {
     return;
 }
 
-$pluginVersion = '0.1.0';
+$pluginVersion = '0.1.1';
 $logFile = rtrim($logDirectory, '/') . '/plugin-FPPPushoverNotifications.log';
 $logExists = is_file($logFile);
 $logLines = array();
