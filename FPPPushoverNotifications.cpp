@@ -330,7 +330,9 @@ void handlePlaylistEvent(const Json::Value& playlist,
 
 class FPPPushoverNotifications : public FPPPlugin {
 public:
-    FPPPushoverNotifications() : FPPPlugin("FPPPushoverNotifications") {}
+    FPPPushoverNotifications() : FPPPlugin("FPPPushoverNotifications") {
+        appendLog("NATIVE PLUGIN LOADED | version=0.4.1");
+    }
 
     void playlistCallback(const Json::Value& playlist,
                           const std::string& action,
