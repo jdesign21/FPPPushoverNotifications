@@ -5,7 +5,7 @@ if (!isset($pluginName) || $pluginName !== 'FPPPushoverNotifications') {
     return;
 }
 
-$pluginVersion = '0.3.7';
+$pluginVersion = '0.3.8';
 $settingKeys = array('RemoteFalconEnabled', 'ShowStartEnabled', 'ShowEndEnabled', 'MainShowPlaylist', 'AutoRefreshEnabled', 'PushoverUserKey', 'PushoverApiToken');
 $defaults = array(
     'RemoteFalconEnabled' => '1',
@@ -356,7 +356,7 @@ function pushover_event_detail($line) {
         <?php endforeach; endif; ?>
     </div>
 
-    <div class="po-footer"><?php echo pushover_checked($settings['AutoRefreshEnabled']) !== '' ? 'Automatic refresh is enabled (30 seconds). It pauses while a form field is active.' : 'Automatic refresh is disabled. Refresh the page manually to see new events.'; ?> Event tracking is local to this FPP player. RemoteFalcon song selections are sent automatically to Pushover when enabled. Show start/end tracking is currently local history only.</div>
+    <div class="po-footer"><?php echo pushover_checked($settings['AutoRefreshEnabled']) !== '' ? 'Automatic refresh is enabled (30 seconds). It pauses while a form field is active.' : 'Automatic refresh is disabled. Refresh the page manually to see new events.'; ?> Event tracking is local to this FPP player. RemoteFalcon song selections are sent automatically to Pushover when enabled. Enabled show start/end events are also sent to Pushover.</div>
 
 <?php if (pushover_checked($settings['AutoRefreshEnabled']) !== ''): ?>
 <script>
