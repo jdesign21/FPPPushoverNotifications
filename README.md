@@ -10,7 +10,7 @@ In FPP, open **Content Setup → Plugin Manager** and use this manifest URL:
 
 The FPP install script registers the native callback handler and builds the C++ shared library against the installed FPP source tree. On FPP 9.3, the callback dispatcher is stored as executable in Git and the installer disables Git file-mode drift tracking. This prevents the install script from making the checkout appear modified and blocking later `git pull` updates.
 
-## Current milestone (0.2.4)
+## Current milestone (0.2.5)
 
 The current build monitors native FPP playlist-start and media-change callbacks. When a playlist starts or FPP changes media, the plugin writes a timestamped entry (including available song title and artist) to:
 
@@ -29,6 +29,9 @@ Open **Content Setup → Pushover Notifications** to view plugin status and the 
 
 The native library is rebuilt by `scripts/fpp_install.sh` during plugin installation and updates.
 
+
+### 0.2.5
+- Compact notification history rows and added a confirmation-protected Clear History action that empties the plugin event log.
 
 ### 0.2.4
 - Fixed settings save handling: FPP 9.3 `WriteSettingToFile()` returns no status value, so the dashboard now verifies saved settings by reading them back instead of treating the void return as a failure.
