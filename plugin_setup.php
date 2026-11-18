@@ -5,7 +5,7 @@ if (!isset($pluginName) || $pluginName !== 'FPPPushoverNotifications') {
     return;
 }
 
-$pluginVersion = '0.3.8';
+$pluginVersion = '0.3.9';
 $settingKeys = array('RemoteFalconEnabled', 'ShowStartEnabled', 'ShowEndEnabled', 'MainShowPlaylist', 'AutoRefreshEnabled', 'PushoverUserKey', 'PushoverApiToken');
 $defaults = array(
     'RemoteFalconEnabled' => '1',
@@ -180,7 +180,16 @@ $pushoverRequestLog = rtrim($logDirectory, '/') . '/plugin-FPPPushoverNotificati
 $pushoverRequestLines = (is_file($pushoverRequestLog) && is_readable($pushoverRequestLog))
     ? @file($pushoverRequestLog, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) : array();
 if (!is_array($pushoverRequestLines)) $pushoverRequestLines = array();
-$pushoverRequestLines = array_slice($pushoverRequestLines, -10);
+
+// Show sender decisions from the main plugin log as well as curl's HTTP response.
+$pushoverDiagnosticLines = array();
+foreach ($allLines as $pluginLogLine) {
+    if (strpos($pluginLogLine, 'PUSHOVER') !== false) {
+        $pushoverDiagnosticLines[] = $pluginLogLine;
+    }
+}
+$pushoverDiagnosticLines = array_merge($pushoverDiagnosticLines, $pushoverRequestLines);
+$pushoverDiagnosticLines = array_slice($pushoverDiagnosticLines, -10);
 $fppVersion = function_exists('getFPPVersion') ? getFPPVersion() : 'Unknown';
 
 function pushover_h($value) {
@@ -349,9 +358,9 @@ function pushover_event_detail($line) {
 
     <div class="po-section">Pushover Delivery Diagnostics</div>
     <div class="po-history">
-        <?php if (empty($pushoverRequestLines)): ?>
+        <?php if (empty($pushoverDiagnosticLines)): ?>
             <div class="po-empty">No automatic Pushover request has been recorded yet.</div>
-        <?php else: foreach (array_reverse($pushoverRequestLines) as $requestLine): ?>
+        <?php else: foreach (array_reverse($pushoverDiagnosticLines) as $requestLine): ?>
             <div class="po-history-row"><div class="po-history-detail" style="white-space:normal;overflow-wrap:anywhere" title="<?php echo pushover_h($requestLine); ?>"><?php echo pushover_h($requestLine); ?></div></div>
         <?php endforeach; endif; ?>
     </div>
