@@ -10,13 +10,13 @@ In FPP, open **Content Setup → Plugin Manager** and use this manifest URL:
 
 The FPP install script registers the native callback handler and builds the C++ shared library against the installed FPP source tree. On FPP 9.3, the callback dispatcher is stored as executable in Git and the installer disables Git file-mode drift tracking. This prevents the install script from making the checkout appear modified and blocking later `git pull` updates.
 
-## Current milestone (0.3.1)
+## Current milestone (0.3.2)
 
 The current build monitors native FPP playlist-start and media-change callbacks. When a playlist starts or FPP changes media, the plugin writes a timestamped entry (including available song title and artist) to:
 
 `/home/fpp/media/logs/plugin-FPPPushoverNotifications.log`
 
-The configuration page now stores the Pushover User Key and API Token locally in the FPP plugin settings and provides a test-notification button. The test button sends a single HTTPS request to Pushover's message API; automatic event-triggered notifications are not yet connected. RemoteFalcon song selections are filtered by playlist origin and duplicate title/artist callbacks received within five seconds are suppressed. The same song can be counted again after that window. The plugin does not use MQTT, Node-RED, or a broker. Its only outbound request in this milestone is the HTTPS test notification initiated manually from the dashboard.
+The configuration page stores the Pushover User Key and API Token locally in the FPP plugin settings and provides a test-notification button. When RemoteFalcon song notifications are enabled and credentials are configured, each detected RemoteFalcon song selection sends an HTTPS notification to Pushover. The message contains the song title and artist. Duplicate title/artist callbacks received within five seconds are suppressed; the same song can be selected again after that window. Show start/end events are still tracked locally and are not yet sent to Pushover. The plugin does not use MQTT, Node-RED, or a broker. HTTPS requests are made directly to Pushover using the system curl executable.
 
 ## Configuration page
 
@@ -29,6 +29,11 @@ Open **Content Setup → Pushover Notifications** to configure Pushover credenti
 
 The native library is rebuilt by `scripts/fpp_install.sh` during plugin installation and updates.
 
+
+### 0.3.2
+- Added automatic Pushover notifications for enabled RemoteFalcon song selections.
+- Sends song title and artist directly to Pushover over HTTPS without MQTT or Node-RED.
+- Keeps duplicate callback suppression and leaves show start/end notifications for a later milestone.
 
 ### 0.3.1
 - Improved credential-save verification using both FPP's write result (when available) and read-back comparison.
