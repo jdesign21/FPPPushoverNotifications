@@ -59,7 +59,11 @@ fi
 chmod 755 "${LIBRARY}"
 
 # Ask FPP to reload its plugin list and load the newly built library.
-if command -v setSetting >/dev/null 2>&1; then
+# During a Plugin Manager upgrade, newer FPP versions reload the plugin
+# after this script returns. Do not request a competing restart in that case.
+if [ "${FPP_RELOADS_PLUGIN:-0}" = "1" ]; then
+    echo "FPP will reload the native plugin after the upgrade."
+elif command -v setSetting >/dev/null 2>&1; then
     setSetting restartFlag 1
 else
     echo "Warning: setSetting is unavailable; restart FPPD to load the plugin." >&2
