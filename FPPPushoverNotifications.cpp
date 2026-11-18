@@ -104,15 +104,12 @@ void appendLog(const std::string& message) {
 }
 
 
-std::string curlConfigValue(const std::string& value) {
-    std::string escaped;
-    escaped.reserve(value.size() + 8);
-    for (char ch : value) {
-        if (ch == '\\' || ch == '"') escaped.push_back('\\');
-        if (ch == '\r' || ch == '\n') continue;
-        escaped.push_back(ch);
-    }
-    return escaped;
+std::string pushoverRequestLogPath() {
+    const char* logDir = std::getenv("LOGDIR");
+    const std::string directory = (logDir && *logDir)
+        ? logDir
+        : mediaDirectory() + "/logs";
+    return directory + "/plugin-FPPPushoverNotifications-pushover.log";
 }
 
 void sendPushoverNotification(const std::string& title,
@@ -138,66 +135,67 @@ void sendPushoverNotification(const std::string& title,
         return;
     }
 
-    int pipeFds[2];
-    if (pipe(pipeFds) != 0) {
-        appendLog("PUSHOVER ERROR | could not create request pipe");
-        return;
-    }
-
-    const std::string config =
-        "url = \"https://api.pushover.net/1/messages.json\"\n"
-        "request = \"POST\"\n"
-        "data-urlencode = \"token=" + curlConfigValue(apiToken) + "\"\n"
-        "data-urlencode = \"user=" + curlConfigValue(userKey) + "\"\n"
-        "data-urlencode = \"title=" + curlConfigValue(title) + "\"\n"
-        "data-urlencode = \"message=" + curlConfigValue(message) + "\"\n"
-        "data-urlencode = \"priority=0\"\n";
-
     const pid_t child = fork();
     if (child < 0) {
-        close(pipeFds[0]);
-        close(pipeFds[1]);
         appendLog("PUSHOVER ERROR | could not start request process");
         return;
     }
 
     if (child == 0) {
-        close(pipeFds[1]);
         const pid_t worker = fork();
         if (worker < 0) _exit(1);
         if (worker > 0) _exit(0);
 
         setsid();
-        dup2(pipeFds[0], STDIN_FILENO);
-        close(pipeFds[0]);
-        const int nullFd = open("/dev/null", O_WRONLY);
-        if (nullFd >= 0) {
-            dup2(nullFd, STDOUT_FILENO);
-            dup2(nullFd, STDERR_FILENO);
-            close(nullFd);
+
+        const int logFd = open(pushoverRequestLogPath().c_str(),
+                               O_WRONLY | O_CREAT | O_APPEND, 0644);
+        if (logFd >= 0) {
+            dup2(logFd, STDOUT_FILENO);
+            dup2(logFd, STDERR_FILENO);
+            if (logFd > STDERR_FILENO) close(logFd);
+        } else {
+            const int nullFd = open("/dev/null", O_WRONLY);
+            if (nullFd >= 0) {
+                dup2(nullFd, STDOUT_FILENO);
+                dup2(nullFd, STDERR_FILENO);
+                close(nullFd);
+            }
         }
-        execlp("curl", "curl", "--config", "-", "--silent", "--show-error",
-               "--max-time", "20", static_cast<char*>(nullptr));
+
+        const std::vector<std::string> arguments = {
+            "curl",
+            "--silent",
+            "--show-error",
+            "--fail-with-body",
+            "--connect-timeout", "10",
+            "--max-time", "20",
+            "--output", "-",
+            "--write-out", "\nHTTP_STATUS:%{http_code}\n",
+            "--request", "POST",
+            "--data-urlencode", "token=" + apiToken,
+            "--data-urlencode", "user=" + userKey,
+            "--data-urlencode", "title=" + title,
+            "--data-urlencode", "message=" + message,
+            "--data-urlencode", "priority=0",
+            "https://api.pushover.net/1/messages.json"
+        };
+        std::vector<char*> argv;
+        argv.reserve(arguments.size() + 1);
+        for (const auto& argument : arguments)
+            argv.push_back(const_cast<char*>(argument.c_str()));
+        argv.push_back(nullptr);
+
+        execvp("curl", argv.data());
         _exit(127);
     }
 
-    close(pipeFds[0]);
-    size_t written = 0;
-    while (written < config.size()) {
-        const ssize_t count = write(pipeFds[1], config.data() + written, config.size() - written);
-        if (count < 0) {
-            if (errno == EINTR) continue;
-            break;
-        }
-        written += static_cast<size_t>(count);
-    }
-    close(pipeFds[1]);
     int status = 0;
     while (waitpid(child, &status, 0) < 0 && errno == EINTR) {}
-    if (written == config.size() && WIFEXITED(status) && WEXITSTATUS(status) == 0) {
-        appendLog("PUSHOVER QUEUED | " + title);
+    if (WIFEXITED(status) && WEXITSTATUS(status) == 0) {
+        appendLog("PUSHOVER REQUEST STARTED | " + title);
     } else {
-        appendLog("PUSHOVER ERROR | request could not be queued");
+        appendLog("PUSHOVER ERROR | request process did not start");
     }
 }
 
