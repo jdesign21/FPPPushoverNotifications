@@ -15,6 +15,6 @@ libFPPPushoverNotifications.$(SHLIB_EXT): $(OBJECTS_fpp_FPPPushoverNotifications
 	$(CCACHE) $(CC) $(CFLAGS) $(CXXFLAGS) $(CXXFLAGS_$@) -c $< -o $@
 
 clean:
-	rm -f libFPPPushoverNotifications.$(SHLIB_EXT) $(OBJECTS_fpp_FPPPushoverNotifications_so)
+	rm -f libFPPPushoverNotifications.$(SHLIB_EXT) libfpp-FPPPushoverNotifications.$(SHLIB_EXT) FPPPushoverNotifications.o
 
 .PHONY: all clean
