@@ -138,6 +138,7 @@ void handlePlaylistEvent(const Json::Value& playlist,
     const std::string name = playlistName(playlist);
 
     if (action == "start") {
+        if (name.empty()) return;
         {
             std::lock_guard<std::mutex> lock(playlistStateMutex);
             playlistStack.push_back(name);
