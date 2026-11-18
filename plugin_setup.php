@@ -5,7 +5,7 @@ if (!isset($pluginName) || $pluginName !== 'FPPPushoverNotifications') {
     return;
 }
 
-$pluginVersion = '0.2.4';
+$pluginVersion = '0.2.5';
 $settingKeys = array('RemoteFalconEnabled', 'ShowStartEnabled', 'ShowEndEnabled', 'MainShowPlaylist');
 $defaults = array(
     'RemoteFalconEnabled' => '1',
@@ -15,8 +15,15 @@ $defaults = array(
 );
 $saveMessage = '';
 $saveError = '';
+$logFile = rtrim($logDirectory, '/') . '/plugin-FPPPushoverNotifications.log';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['saveNotificationSettings'])) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['clearNotificationHistory'])) {
+    if (@file_put_contents($logFile, '', LOCK_EX) !== false) {
+        $saveMessage = 'Notification history cleared.';
+    } else {
+        $saveError = 'Could not clear notification history. Check the FPP log directory permissions.';
+    }
+} elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['saveNotificationSettings'])) {
     $values = array(
         'RemoteFalconEnabled' => isset($_POST['RemoteFalconEnabled']) ? '1' : '0',
         'ShowStartEnabled' => isset($_POST['ShowStartEnabled']) ? '1' : '0',
@@ -56,7 +63,6 @@ foreach ($settingKeys as $key) {
     $value = ReadSettingFromFile($key, $pluginName);
     $settings[$key] = ($value === false) ? $defaults[$key] : $value;
 }
-$logFile = rtrim($logDirectory, '/') . '/plugin-FPPPushoverNotifications.log';
 $logExists = is_file($logFile);
 $logReadable = $logExists && is_readable($logFile);
 $allLines = ($logReadable) ? @file($logFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) : array();
@@ -136,11 +142,16 @@ function pushover_event_detail($line) {
 #pushover-page .po-success { background:#e8f5ee; color:#187447; }
 #pushover-page .po-error { background:#fdecec; color:#a83232; }
 #pushover-page .po-history { overflow:hidden; background:#fff; border:1px solid var(--po-border); border-radius:10px; }
-#pushover-page .po-history-row { display:flex; justify-content:space-between; align-items:flex-start; gap:16px; padding:14px 17px; border-bottom:1px solid #edf0f4; }
+#pushover-page .po-history-row { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:7px 12px; border-bottom:1px solid #edf0f4; min-height:34px; }
 #pushover-page .po-history-row:last-child { border-bottom:0; }
-#pushover-page .po-history-type { font-size:13px; font-weight:700; }
-#pushover-page .po-history-detail { margin-top:4px; color:var(--po-muted); font-size:12px; overflow-wrap:anywhere; }
-#pushover-page .po-time { flex:0 0 auto; color:var(--po-muted); font-size:12px; white-space:nowrap; }
+#pushover-page .po-history-main { display:flex; align-items:center; gap:10px; min-width:0; flex:1 1 auto; }
+#pushover-page .po-history-type { flex:0 0 112px; font-size:12px; font-weight:700; white-space:nowrap; }
+#pushover-page .po-history-detail { min-width:0; color:var(--po-muted); font-size:11px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+#pushover-page .po-time { flex:0 0 auto; color:var(--po-muted); font-size:11px; white-space:nowrap; }
+#pushover-page .po-history-head { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:9px; }
+#pushover-page .po-history-head .po-section { margin:25px 0 0; }
+#pushover-page .po-clear { padding:6px 10px; border:1px solid #d7a0a0; border-radius:6px; color:#a83232; background:#fff; font-size:12px; font-weight:700; cursor:pointer; }
+#pushover-page .po-clear:hover { background:#fff1f1; }
 #pushover-page .po-empty { padding:24px; color:var(--po-muted); font-size:13px; text-align:center; }
 #pushover-page .po-footer { margin-top:12px; color:var(--po-muted); font-size:12px; }
 @media(max-width:850px) { #pushover-page .po-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
@@ -189,7 +200,12 @@ function pushover_event_detail($line) {
         </form>
     </div>
 
-    <div class="po-section">Notification History</div>
+    <div class="po-history-head">
+        <div class="po-section">Notification History <span style="font-size:12px;color:var(--po-muted);font-weight:500">(<?php echo count($history); ?> shown)</span></div>
+        <form method="post" action="" onsubmit="return confirm('Delete all notification history? This cannot be undone.');">
+            <button class="po-clear" type="submit" name="clearNotificationHistory" value="1">Clear History</button>
+        </form>
+    </div>
     <div class="po-history">
         <?php if (empty($history)): ?>
             <div class="po-empty">No tracked events yet. Events will appear here as FPP detects them.</div>
@@ -201,7 +217,7 @@ function pushover_event_detail($line) {
             $time = strtotime($timestamp);
         ?>
             <div class="po-history-row">
-                <div><div class="po-history-type"><?php echo pushover_h($event['type']); ?></div><div class="po-history-detail"><?php echo pushover_h($detail); ?></div></div>
+                <div class="po-history-main"><div class="po-history-type"><?php echo pushover_h($event['type']); ?></div><div class="po-history-detail" title="<?php echo pushover_h($detail); ?>"><?php echo pushover_h($detail); ?></div></div>
                 <div class="po-time"><?php echo $time ? date('g:i A', $time) : pushover_h($timestamp); ?></div>
             </div>
         <?php endforeach; endif; ?>
