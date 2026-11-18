@@ -5,7 +5,7 @@ if (!isset($pluginName) || $pluginName !== 'FPPPushoverNotifications') {
     return;
 }
 
-$pluginVersion = '0.3.1';
+$pluginVersion = '0.3.2';
 $settingKeys = array('RemoteFalconEnabled', 'ShowStartEnabled', 'ShowEndEnabled', 'MainShowPlaylist', 'PushoverUserKey', 'PushoverApiToken');
 $defaults = array(
     'RemoteFalconEnabled' => '1',
@@ -332,5 +332,5 @@ function pushover_event_detail($line) {
         <?php endforeach; endif; ?>
     </div>
 
-    <div class="po-footer">Dashboard refreshes every 10 seconds. Event tracking is local to this FPP player. The test button verifies Pushover connectivity; automatic event notifications are the next milestone.</div>
+    <div class="po-footer">Dashboard refreshes every 10 seconds. Event tracking is local to this FPP player. RemoteFalcon song selections are sent automatically to Pushover when enabled. Show start/end tracking is currently local history only.</div>
 </div>
