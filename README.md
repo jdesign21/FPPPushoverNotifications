@@ -10,7 +10,7 @@ In FPP, open **Content Setup → Plugin Manager** and use this manifest URL:
 
 The FPP install script registers the native callback handler and builds the C++ shared library against the installed FPP source tree. On FPP 9.3, the callback dispatcher is stored as executable in Git and the installer disables Git file-mode drift tracking. This prevents the install script from making the checkout appear modified and blocking later `git pull` updates.
 
-## Current milestone (0.3.6)
+## Current milestone (0.3.7)
 
 The current build monitors native FPP playlist-start and media-change callbacks. When a playlist starts or FPP changes media, the plugin writes a timestamped entry (including available song title and artist) to:
 
@@ -29,6 +29,9 @@ Open **Content Setup → Pushover Notifications** to configure Pushover credenti
 
 The native library is rebuilt by `scripts/fpp_install.sh` during plugin installation and updates.
 
+
+### 0.3.7
+- Displays saved Pushover credentials inside the password fields as masked values, allowing the operator to see that they are populated and replace them when needed.
 
 ### 0.3.6
 - Corrects the saved-credential indicators to check the persisted Pushover keys directly, matching the values used by the test-notification action.
