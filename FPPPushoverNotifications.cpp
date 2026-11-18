@@ -105,7 +105,7 @@ void logMediaChange(const Json::Value& playlist,
     // RemoteFalcon is the exact origin marker used by the original flow.
     // Other media changes remain diagnostic-only and are never counted as requests.
     if (settings.remoteFalconEnabled &&
-        payload.find("\"RemoteFalcon\"") != std::string::npos) {
+        playlistName(playlist) == "RemoteFalcon") {
         std::ostringstream line;
         line << "REMOTE FALCON SONG SELECTED"
              << " | title=" << mediaDetails.title
