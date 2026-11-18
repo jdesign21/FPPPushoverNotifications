@@ -2,28 +2,28 @@
   "repoName": "FPPPushoverNotifications",
   "name": "FPP Pushover Notifications",
   "author": "Juan Melendrez",
-  "description": "Detects FPP playlist events and sends configurable notifications through Pushover.",
+  "description": "Tracks RemoteFalcon song selections and main show start/end events, with configurable event settings and a dashboard.",
   "homeURL": "https://github.com/jdesign21/FPPPushoverNotifications",
   "srcURL": "https://github.com/jdesign21/FPPPushoverNotifications.git",
   "bugURL": "https://github.com/jdesign21/FPPPushoverNotifications/issues",
   "releaseNotesStyle": "gitHistory",
   "privacy": {
-    "summary": "The current test build records playlist-start and media-change events locally, including media title and artist. Once notifications are enabled, configured event details will be sent to Pushover over HTTPS.",
+    "summary": "The plugin stores local notification preferences and records detected RemoteFalcon song selections and main show start/end events in the FPP media log. This milestone does not send requests to Pushover.",
     "sends": [],
     "collects": [
       {
-        "what": "Local playlist and media event log",
+        "what": "Local event history and notification preferences",
         "about": "operator",
         "keptDays": null,
         "canDelete": true,
-        "where": "/home/fpp/media/logs/plugin-FPPPushoverNotifications.log"
+        "where": "/home/fpp/media/logs/plugin-FPPPushoverNotifications.log and /home/fpp/media/config/plugin.FPPPushoverNotifications"
       }
     ],
     "sensors": [],
     "remoteAccess": "none",
     "systemChanges": [],
     "closedCode": false,
-    "other": "The current build does not send requests to Pushover and does not store Pushover credentials."
+    "other": "No requests are sent to Pushover in this milestone. Notification credentials are not stored."
   },
   "versions": [
     {
