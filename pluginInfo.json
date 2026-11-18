@@ -8,11 +8,11 @@
   "bugURL": "https://github.com/jdesign21/FPPPushoverNotifications/issues",
   "releaseNotesStyle": "gitHistory",
   "privacy": {
-    "summary": "The current test build records playlist-start events locally. Once notifications are enabled, configured event details will be sent to Pushover over HTTPS.",
+    "summary": "The current test build records playlist-start and media-change events locally, including media title and artist. Once notifications are enabled, configured event details will be sent to Pushover over HTTPS.",
     "sends": [],
     "collects": [
       {
-        "what": "Local playlist event log",
+        "what": "Local playlist and media event log",
         "about": "operator",
         "keptDays": null,
         "canDelete": true,
