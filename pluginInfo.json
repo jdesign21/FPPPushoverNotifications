@@ -2,27 +2,41 @@
   "repoName": "FPPPushoverNotifications",
   "name": "FPP Pushover Notifications",
   "author": "Juan Melendrez",
-  "description": "Personal FPP plugin. Initial milestone verifies native playlist-start callback events.",
+  "description": "Detects FPP playlist events and sends configurable notifications through Pushover.",
   "homeURL": "https://github.com/jdesign21/FPPPushoverNotifications",
   "srcURL": "https://github.com/jdesign21/FPPPushoverNotifications.git",
   "bugURL": "https://github.com/jdesign21/FPPPushoverNotifications/issues",
-  "allowUpdates": 1,
+  "releaseNotesStyle": "gitHistory",
   "privacy": {
-    "summary": "Initial test runs locally and writes playlist-start event details to the FPP plugin log. It sends no data externally.",
+    "summary": "The current test build records playlist-start events locally. Once notifications are enabled, configured event details will be sent to Pushover over HTTPS.",
     "sends": [],
-    "collects": [],
+    "collects": [
+      {
+        "what": "Local playlist event log",
+        "about": "operator",
+        "keptDays": null,
+        "canDelete": true,
+        "where": "/home/fpp/media/logs/plugin-FPPPushoverNotifications.log"
+      }
+    ],
     "sensors": [],
     "remoteAccess": "none",
     "systemChanges": [],
     "closedCode": false,
-    "other": "No Pushover requests or credentials are used in this initial test."
+    "other": "The current build does not send requests to Pushover and does not store Pushover credentials."
   },
   "versions": [
     {
       "minFPPVersion": "9.3",
       "maxFPPVersion": "9.99",
       "branch": "main",
-      "sha": ""
+      "sha": "",
+      "allowUpdates": 1,
+      "dependencies": {
+        "plugins": [],
+        "packages": [],
+        "scripts": []
+      }
     }
   ]
 }
