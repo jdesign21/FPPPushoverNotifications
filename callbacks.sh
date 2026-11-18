@@ -12,7 +12,7 @@ do
             exit 0
             ;;
         -v|--version)
-            printf "%s, version %s\n" "FPPPushoverNotifications" "0.3.3"
+            printf "%s, version %s\n" "FPPPushoverNotifications" "0.3.4"
             exit 0
             ;;
         --)
