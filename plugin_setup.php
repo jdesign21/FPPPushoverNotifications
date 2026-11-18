@@ -184,7 +184,8 @@ if (!is_array($pushoverRequestLines)) $pushoverRequestLines = array();
 // Show sender decisions from the main plugin log as well as curl's HTTP response.
 $pushoverDiagnosticLines = array();
 foreach ($allLines as $pluginLogLine) {
-    if (strpos($pluginLogLine, 'PUSHOVER') !== false) {
+    if (strpos($pluginLogLine, 'PUSHOVER') !== false ||
+        strpos($pluginLogLine, 'NATIVE PLUGIN LOADED') !== false) {
         $pushoverDiagnosticLines[] = $pluginLogLine;
     }
 }
