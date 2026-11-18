@@ -11,9 +11,12 @@
 #include <mutex>
 #include <sstream>
 #include <string>
+#include <vector>
 
 namespace {
 std::mutex logMutex;
+std::mutex playlistStateMutex;
+std::vector<std::string> playlistStack;
 
 struct PluginSettings {
     bool remoteFalconEnabled = true;
@@ -133,14 +136,36 @@ void handlePlaylistEvent(const Json::Value& playlist,
                          int item) {
     const PluginSettings settings = loadSettings();
     const std::string name = playlistName(playlist);
-    if (name.empty() || name != settings.mainShowPlaylist) return;
 
-    if (action == "start" && settings.showStartEnabled) {
-        appendLog("SHOW STARTED | playlist=" + name);
-    } else if ((action == "stop" || action == "end") && settings.showEndEnabled) {
-        appendLog("SHOW ENDED | playlist=" + name);
+    if (action == "start") {
+        {
+            std::lock_guard<std::mutex> lock(playlistStateMutex);
+            playlistStack.push_back(name);
+        }
+        if (!name.empty() && name == settings.mainShowPlaylist && settings.showStartEnabled)
+            appendLog("SHOW STARTED | playlist=" + name);
+        return;
     }
-}
+
+    if (action == "stop") {
+        std::string stoppedPlaylist;
+        {
+            std::lock_guard<std::mutex> lock(playlistStateMutex);
+            if (!playlistStack.empty()) {
+                stoppedPlaylist = playlistStack.back();
+                playlistStack.pop_back();
+            }
+        }
+
+        // FPP's stop callback is delivered after its playlist state has gone
+        // idle, so its JSON name is empty. Track start/stop as a stack instead;
+        // inserted playlists nest and unwind in last-in/first-out order.
+        if (!stoppedPlaylist.empty() &&
+            stoppedPlaylist == settings.mainShowPlaylist &&
+            settings.showEndEnabled) {
+            appendLog("SHOW ENDED | playlist=" + stoppedPlaylist);
+        }
+    }
 }
 
 class FPPPushoverNotifications : public FPPPlugin {
