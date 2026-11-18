@@ -14,6 +14,11 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
+#include <cerrno>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
+#include <fcntl.h>
 
 namespace {
 std::mutex logMutex;
@@ -98,6 +103,104 @@ void appendLog(const std::string& message) {
     if (log) log << timestamp() << " " << message << '\n';
 }
 
+
+std::string curlConfigValue(const std::string& value) {
+    std::string escaped;
+    escaped.reserve(value.size() + 8);
+    for (char ch : value) {
+        if (ch == '\\' || ch == '"') escaped.push_back('\\');
+        if (ch == '\r' || ch == '\n') continue;
+        escaped.push_back(ch);
+    }
+    return escaped;
+}
+
+void sendPushoverNotification(const std::string& title,
+                              const std::string& message) {
+    const std::string path = mediaDirectory() + "/config/plugin.FPPPushoverNotifications";
+    std::ifstream file(path);
+    std::string line;
+    std::string userKey;
+    std::string apiToken;
+    while (std::getline(file, line)) {
+        const auto separator = line.find('=');
+        if (separator == std::string::npos) continue;
+        const std::string key = trim(line.substr(0, separator));
+        std::string value = trim(line.substr(separator + 1));
+        if (value.size() >= 2 && value.front() == '"' && value.back() == '"')
+            value = value.substr(1, value.size() - 2);
+        if (key == "PushoverUserKey") userKey = value;
+        else if (key == "PushoverApiToken") apiToken = value;
+    }
+
+    if (userKey.empty() || apiToken.empty()) {
+        appendLog("PUSHOVER SKIPPED | credentials are not configured");
+        return;
+    }
+
+    int pipeFds[2];
+    if (pipe(pipeFds) != 0) {
+        appendLog("PUSHOVER ERROR | could not create request pipe");
+        return;
+    }
+
+    const std::string config =
+        "url = \"https://api.pushover.net/1/messages.json\"\n"
+        "request = \"POST\"\n"
+        "data-urlencode = \"token=" + curlConfigValue(apiToken) + "\"\n"
+        "data-urlencode = \"user=" + curlConfigValue(userKey) + "\"\n"
+        "data-urlencode = \"title=" + curlConfigValue(title) + "\"\n"
+        "data-urlencode = \"message=" + curlConfigValue(message) + "\"\n"
+        "data-urlencode = \"priority=0\"\n";
+
+    const pid_t child = fork();
+    if (child < 0) {
+        close(pipeFds[0]);
+        close(pipeFds[1]);
+        appendLog("PUSHOVER ERROR | could not start request process");
+        return;
+    }
+
+    if (child == 0) {
+        close(pipeFds[1]);
+        const pid_t worker = fork();
+        if (worker < 0) _exit(1);
+        if (worker > 0) _exit(0);
+
+        setsid();
+        dup2(pipeFds[0], STDIN_FILENO);
+        close(pipeFds[0]);
+        const int nullFd = open("/dev/null", O_WRONLY);
+        if (nullFd >= 0) {
+            dup2(nullFd, STDOUT_FILENO);
+            dup2(nullFd, STDERR_FILENO);
+            close(nullFd);
+        }
+        execlp("curl", "curl", "--config", "-", "--silent", "--show-error",
+               "--max-time", "20", static_cast<char*>(nullptr));
+        _exit(127);
+    }
+
+    close(pipeFds[0]);
+    size_t written = 0;
+    while (written < config.size()) {
+        const ssize_t count = write(pipeFds[1], config.data() + written, config.size() - written);
+        if (count < 0) {
+            if (errno == EINTR) continue;
+            break;
+        }
+        written += static_cast<size_t>(count);
+    }
+    close(pipeFds[1]);
+    int status = 0;
+    while (waitpid(child, &status, 0) < 0 && errno == EINTR) {}
+    if (written == config.size() && WIFEXITED(status) && WEXITSTATUS(status) == 0) {
+        appendLog("PUSHOVER QUEUED | " + title);
+    } else {
+        appendLog("PUSHOVER ERROR | request could not be queued");
+    }
+}
+
 std::string playlistName(const Json::Value& playlist) {
     if (playlist.isMember("name") && playlist["name"].isString())
         return playlist["name"].asString();
@@ -140,6 +243,8 @@ void logMediaChange(const Json::Value& playlist,
              << " | title=" << mediaDetails.title
              << " | artist=" << mediaDetails.artist;
         appendLog(line.str());
+        sendPushoverNotification("RemoteFalcon Song Selected",
+            mediaDetails.title + " by " + mediaDetails.artist + " has been selected.");
         return;
     }
 
