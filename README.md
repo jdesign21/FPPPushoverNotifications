@@ -1,28 +1,30 @@
 # FPP Pushover Notifications
 
-Personal FPP 9.3 plugin project.
+A personal, unlisted FPP plugin for FPP 9.3. The repository is public so FPP can retrieve it, but it is not submitted to the official FPP plugin catalog.
 
-## Milestone 0.1 — playlist-start callback test
+## Installation
 
-When FPP calls the native playlist callback with action `start`, this plugin writes a timestamped line containing the playlist name to the FPP plugin log.
-
-Log file: `plugin-FPPPushoverNotifications.log` in FPP's configured log directory.
-
-No Pushover credentials or outbound network requests are used yet. No MQTT, Node-RED, or broker is involved.
-
-## Install on FPP 9.3
-
-In Content Setup → Plugin Manager, enter:
+In FPP, open **Content Setup → Plugin Manager** and use this manifest URL:
 
 `https://raw.githubusercontent.com/jdesign21/FPPPushoverNotifications/main/pluginInfo.json`
 
-Retrieve the plugin information and install. The install script builds the native shared library against the FPP source tree.
+The FPP install script registers the native callback handler, builds the C++ shared library against the installed FPP source tree, and requests an FPPD reload. Updates are handled through FPP Plugin Manager; there should be no need to run Git or Make manually.
 
-## Test
+## Current milestone
 
-1. Install the plugin and let FPP complete its normal plugin reload.
-2. Start a playlist.
-3. Open the FPP log viewer and inspect `plugin-FPPPushoverNotifications.log`.
-4. Confirm a `PLAYLIST START` entry appears with the playlist name.
+The current build verifies native FPP playlist-start callback detection. When FPP starts a playlist, the plugin writes a timestamped entry to:
 
-This is an initial integration build. It must be compiled and exercised on the target FPP 9.3 Raspberry Pi before it is considered validated.
+`/home/fpp/media/logs/plugin-FPPPushoverNotifications.log`
+
+Pushover delivery and credential settings are not enabled in this milestone. No MQTT, Node-RED, broker, or external notification request is used.
+
+## Configuration page
+
+Open **Content Setup → Pushover Notifications** to view plugin status and the playlist event log.
+
+## Compatibility
+
+- FPP 9.3 through 9.x
+- Raspberry Pi builds supported by FPP 9.3, subject to successful compilation on the target player
+
+The native library is rebuilt by `scripts/fpp_install.sh` during plugin installation and updates.
