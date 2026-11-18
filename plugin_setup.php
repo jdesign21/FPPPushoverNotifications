@@ -171,6 +171,11 @@ foreach ($allLines as $line) {
     if ($type !== '') $history[] = array('type' => $type, 'line' => $line);
 }
 $history = array_slice(array_reverse($history), 0, 20);
+$pushoverRequestLog = rtrim($logDirectory, '/') . '/plugin-FPPPushoverNotifications-pushover.log';
+$pushoverRequestLines = (is_file($pushoverRequestLog) && is_readable($pushoverRequestLog))
+    ? @file($pushoverRequestLog, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) : array();
+if (!is_array($pushoverRequestLines)) $pushoverRequestLines = array();
+$pushoverRequestLines = array_slice($pushoverRequestLines, -10);
 $fppVersion = function_exists('getFPPVersion') ? getFPPVersion() : 'Unknown';
 
 function pushover_h($value) {
@@ -329,6 +334,15 @@ function pushover_event_detail($line) {
                 <div class="po-history-main"><div class="po-history-type"><?php echo pushover_h($event['type']); ?></div><div class="po-history-detail" title="<?php echo pushover_h($detail); ?>"><?php echo pushover_h($detail); ?></div></div>
                 <div class="po-time"><?php echo $time ? date('g:i A', $time) : pushover_h($timestamp); ?></div>
             </div>
+        <?php endforeach; endif; ?>
+    </div>
+
+    <div class="po-section">Pushover Delivery Diagnostics</div>
+    <div class="po-history">
+        <?php if (empty($pushoverRequestLines)): ?>
+            <div class="po-empty">No automatic Pushover request has been recorded yet.</div>
+        <?php else: foreach (array_reverse($pushoverRequestLines) as $requestLine): ?>
+            <div class="po-history-row"><div class="po-history-detail" style="white-space:normal;overflow-wrap:anywhere" title="<?php echo pushover_h($requestLine); ?>"><?php echo pushover_h($requestLine); ?></div></div>
         <?php endforeach; endif; ?>
     </div>
 
