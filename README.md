@@ -12,11 +12,11 @@ The FPP install script registers the native callback handler, builds the C++ sha
 
 ## Current milestone
 
-The current build verifies native FPP playlist-start callback detection. When FPP starts a playlist, the plugin writes a timestamped entry to:
+The current build monitors native FPP playlist-start and media-change callbacks. When a playlist starts or FPP changes media, the plugin writes a timestamped entry (including available song title and artist) to:
 
 `/home/fpp/media/logs/plugin-FPPPushoverNotifications.log`
 
-Pushover delivery and credential settings are not enabled in this milestone. No MQTT, Node-RED, broker, or external notification request is used.
+Pushover delivery and credential settings are not enabled in this milestone. Media callback payloads are logged temporarily so the RemoteFalcon-origin field can be identified and filtered in the next step. No MQTT, Node-RED, broker, or external notification request is used.
 
 ## Configuration page
 
