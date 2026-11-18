@@ -280,7 +280,7 @@ function pushover_event_detail($line) {
 
     <div class="po-section">Notification Settings</div>
     <div class="po-card">
-        <form method="post" action="">
+        <form method="post" action="" id="po-settings-form">
             <div class="po-settings">
                 <div class="po-setting">
                     <div><div class="po-setting-title">RemoteFalcon song selection</div><div class="po-setting-desc">Notify when someone selects a song from your RemoteFalcon playlist. Other playlists will be ignored.</div></div>
@@ -305,6 +305,7 @@ function pushover_event_detail($line) {
                 <label class="po-toggle"><input type="checkbox" name="AutoRefreshEnabled" value="1"<?php echo pushover_checked($settings['AutoRefreshEnabled']); ?>><span></span></label>
             </div>
             <button class="po-save" type="submit" name="saveNotificationSettings" value="1">Save Settings</button>
+            <div id="po-settings-save-status" class="po-setting-desc" role="status" aria-live="polite"></div>
         </form>
     </div>
 
@@ -390,4 +391,87 @@ function pushover_event_detail($line) {
 })();
 </script>
 <?php endif; ?>
+
+<script>
+// Save notification preferences through FPP 9.3's native plugin-settings API.
+// Verify every value with the matching GET endpoint before reporting success.
+(function () {
+    var form = document.getElementById('po-settings-form');
+    if (!form || !window.jQuery) return;
+
+    form.addEventListener('submit', function (event) {
+        event.preventDefault();
+
+        var status = document.getElementById('po-settings-save-status');
+        var button = form.querySelector('button[type="submit"]');
+        var values = {
+            RemoteFalconEnabled: form.elements.RemoteFalconEnabled.checked ? '1' : '0',
+            ShowStartEnabled: form.elements.ShowStartEnabled.checked ? '1' : '0',
+            ShowEndEnabled: form.elements.ShowEndEnabled.checked ? '1' : '0',
+            MainShowPlaylist: form.elements.MainShowPlaylist.value.trim(),
+            AutoRefreshEnabled: form.elements.AutoRefreshEnabled.checked ? '1' : '0'
+        };
+        var keys = Object.keys(values);
+        var index = 0;
+
+        if (!values.MainShowPlaylist || values.MainShowPlaylist.length > 128 ||
+            /[\\r\\n=]/.test(values.MainShowPlaylist)) {
+            status.textContent = 'Enter a valid main show playlist name (1–128 characters).';
+            status.style.color = '#a83232';
+            return;
+        }
+
+        button.disabled = true;
+        status.textContent = 'Saving settings…';
+        status.style.color = '';
+
+        function fail(key) {
+            button.disabled = false;
+            status.textContent = 'Could not save and verify "' + key +
+                '". Your previous saved settings have been left unchanged where possible. Check FPP plugin configuration permissions.';
+            status.style.color = '#a83232';
+        }
+
+        function saveNext() {
+            if (index >= keys.length) {
+                status.textContent = 'Notification settings saved and verified.';
+                status.style.color = '#187447';
+                window.setTimeout(function () {
+                    window.location.reload();
+                }, 700);
+                return;
+            }
+
+            var key = keys[index];
+            var value = values[key];
+            var endpoint = 'api/plugin/FPPPushoverNotifications/settings/' + encodeURIComponent(key);
+
+            jQuery.ajax({
+                url: endpoint,
+                method: 'PUT',
+                data: value,
+                processData: false,
+                timeout: 10000
+            }).done(function () {
+                jQuery.ajax({
+                    url: endpoint,
+                    method: 'GET',
+                    dataType: 'json',
+                    cache: false,
+                    timeout: 10000
+                }).done(function (response) {
+                    if (!response || String(response[key]) !== value) {
+                        fail(key);
+                        return;
+                    }
+                    index++;
+                    saveNext();
+                }).fail(function () { fail(key); });
+            }).fail(function () { fail(key); });
+        }
+
+        saveNext();
+    });
+})();
+</script>
 </div>
