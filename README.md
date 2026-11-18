@@ -16,7 +16,7 @@ The current build monitors native FPP playlist-start and media-change callbacks.
 
 `/home/fpp/media/logs/plugin-FPPPushoverNotifications.log`
 
-The configuration page now stores the Pushover User Key and API Token locally in the FPP plugin settings and provides a test-notification button. The test button sends a single HTTPS request to Pushover's message API; automatic event-triggered notifications are not yet connected. RemoteFalcon song selections are filtered by playlist origin and duplicate title/artist callbacks received within five seconds are suppressed. The same song can be counted again after that window. No MQTT, Node-RED, broker, or external notification request is used.
+The configuration page now stores the Pushover User Key and API Token locally in the FPP plugin settings and provides a test-notification button. The test button sends a single HTTPS request to Pushover's message API; automatic event-triggered notifications are not yet connected. RemoteFalcon song selections are filtered by playlist origin and duplicate title/artist callbacks received within five seconds are suppressed. The same song can be counted again after that window. The plugin does not use MQTT, Node-RED, or a broker. Its only outbound request in this milestone is the HTTPS test notification initiated manually from the dashboard.
 
 ## Configuration page
 
