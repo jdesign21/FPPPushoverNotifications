@@ -415,7 +415,7 @@ function pushover_event_detail($line) {
         var index = 0;
 
         if (!values.MainShowPlaylist || values.MainShowPlaylist.length > 128 ||
-            /[\\r\\n=]/.test(values.MainShowPlaylist)) {
+            /[\x0a\x0d=]/.test(values.MainShowPlaylist)) {
             status.textContent = 'Enter a valid main show playlist name (1–128 characters).';
             status.style.color = '#a83232';
             return;
