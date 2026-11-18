@@ -4,7 +4,26 @@
 **Current repository version:** 0.4.1  
 **Target platform:** Falcon Player (FPP) 9.3 on Raspberry Pi  
 **Primary target currently used for development:** Raspberry Pi 4, FPP OS build v2025-11  
-**Document status:** Engineering handoff / current known state  
+**Document status:** Engineering handoff / current known state
+
+
+## FPP target system snapshot
+
+The following system information was supplied from the target FPP player's System Information page. Boot time and daemon uptime are a snapshot from the time the information was collected; they will change after a reboot or as the service continues running.
+
+| Property | Value |
+|---|---|
+| FPP Version | 9.3 |
+| Platform | Raspberry Pi (Pi 4) |
+| FPP OS Build | v2025-11 |
+| OS Version | Raspbian GNU/Linux 12 (bookworm) |
+| Hardware Serial Number | `10000000a4c29e3b` |
+| Kernel Version | `6.12.57-v7l+` |
+| System Boot Time | `2026-11-17 20:56:03` |
+| fppd Uptime | `02:46` |
+
+This snapshot supplements the target-platform details above and should be used when reproducing build, plugin-loading, callback, settings-persistence, or runtime issues on the same FPP environment.
+  
 **Last reviewed:** 2026-11-18
 
 ---
