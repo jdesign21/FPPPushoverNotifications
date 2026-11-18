@@ -1,4 +1,12 @@
 #!/bin/bash
 set -e
-# This initial callback test creates no files or services outside the plugin.
+
+: "${FPPDIR:=/opt/fpp}"
+if [ -f "${FPPDIR}/scripts/common" ]; then
+    . "${FPPDIR}/scripts/common"
+    if command -v setSetting >/dev/null 2>&1; then
+        setSetting restartFlag 1
+    fi
+fi
+
 exit 0
