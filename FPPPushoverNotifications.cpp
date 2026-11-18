@@ -115,8 +115,13 @@ std::string pushoverRequestLogPath() {
 
 void sendPushoverNotification(const std::string& title,
                               const std::string& message) {
-    const std::string path = mediaDirectory() + "/config/plugin.FPPPushoverNotifications";
-    std::ifstream file(path);
+    // Record entry before reading credentials so the dashboard can distinguish
+    // a callback that never reached the sender from a credentials problem.
+    appendLog("PUSHOVER SENDER ENTERED | title=" + title);
+
+    const std::string configPath =
+        mediaDirectory() + "/config/plugin.FPPPushoverNotifications";
+    std::ifstream file(configPath);
     std::string line;
     std::string userKey;
     std::string apiToken;
@@ -132,26 +137,55 @@ void sendPushoverNotification(const std::string& title,
     }
 
     if (userKey.empty() || apiToken.empty()) {
-        appendLog("PUSHOVER SKIPPED | credentials are not configured | config=" + path);
+        appendLog("PUSHOVER SKIPPED | credentials missing | config=" + configPath);
         return;
     }
 
     appendLog("PUSHOVER ATTEMPT | title=" + title + " | credentials=loaded");
 
+    // Build every C++ object before fork(). FPP runs callbacks inside a
+    // multithreaded daemon; allocating strings/vectors in the forked child can
+    // deadlock on inherited allocator or library locks before exec().
+    const std::string requestLogPath = pushoverRequestLogPath();
+    const std::vector<std::string> arguments = {
+        "curl",
+        "--silent",
+        "--show-error",
+        "--fail-with-body",
+        "--connect-timeout", "10",
+        "--max-time", "20",
+        "--output", "-",
+        "--write-out", "\nHTTP_STATUS:%{http_code}\n",
+        "--request", "POST",
+        "--data-urlencode", "token=" + apiToken,
+        "--data-urlencode", "user=" + userKey,
+        "--data-urlencode", "title=" + title,
+        "--data-urlencode", "message=" + message,
+        "--data-urlencode", "priority=0",
+        "https://api.pushover.net/1/messages.json"
+    };
+    std::vector<char*> argv;
+    argv.reserve(arguments.size() + 1);
+    for (const auto& argument : arguments)
+        argv.push_back(const_cast<char*>(argument.c_str()));
+    argv.push_back(nullptr);
+
     const pid_t child = fork();
     if (child < 0) {
-        appendLog("PUSHOVER ERROR | could not start request process");
+        appendLog("PUSHOVER ERROR | fork failed | errno=" + std::to_string(errno));
         return;
     }
 
     if (child == 0) {
+        // Double-fork so FPP's event callback does not wait for network I/O and
+        // the detached curl worker is re-parented instead of becoming a zombie.
         const pid_t worker = fork();
         if (worker < 0) _exit(1);
         if (worker > 0) _exit(0);
 
         setsid();
 
-        const int logFd = open(pushoverRequestLogPath().c_str(),
+        const int logFd = open(requestLogPath.c_str(),
                                O_WRONLY | O_CREAT | O_APPEND, 0644);
         if (logFd >= 0) {
             dup2(logFd, STDOUT_FILENO);
@@ -166,42 +200,25 @@ void sendPushoverNotification(const std::string& title,
             }
         }
 
-        const std::vector<std::string> arguments = {
-            "curl",
-            "--silent",
-            "--show-error",
-            "--fail-with-body",
-            "--connect-timeout", "10",
-            "--max-time", "20",
-            "--output", "-",
-            "--write-out", "\nHTTP_STATUS:%{http_code}\n",
-            "--request", "POST",
-            "--data-urlencode", "token=" + apiToken,
-            "--data-urlencode", "user=" + userKey,
-            "--data-urlencode", "title=" + title,
-            "--data-urlencode", "message=" + message,
-            "--data-urlencode", "priority=0",
-            "https://api.pushover.net/1/messages.json"
-        };
-        std::vector<char*> argv;
-        argv.reserve(arguments.size() + 1);
-        for (const auto& argument : arguments)
-            argv.push_back(const_cast<char*>(argument.c_str()));
-        argv.push_back(nullptr);
-
-        // FPP daemon PATH may not include curl; try the standard Debian path too.
-        execvp("curl", argv.data());
+        // Only async-signal-safe system calls occur between fork and exec.
         execv("/usr/bin/curl", argv.data());
-        dprintf(STDERR_FILENO, "CURL EXEC FAILED | errno=%d | %s\n", errno, strerror(errno));
+        execvp("curl", argv.data());
+        static const char errorText[] = "CURL EXEC FAILED: could not execute curl\n";
+        write(STDERR_FILENO, errorText, sizeof(errorText) - 1);
         _exit(127);
     }
 
     int status = 0;
-    while (waitpid(child, &status, 0) < 0 && errno == EINTR) {}
-    if (WIFEXITED(status) && WEXITSTATUS(status) == 0) {
+    pid_t waited;
+    do {
+        waited = waitpid(child, &status, 0);
+    } while (waited < 0 && errno == EINTR);
+
+    if (waited == child && WIFEXITED(status) && WEXITSTATUS(status) == 0) {
         appendLog("PUSHOVER REQUEST STARTED | " + title);
     } else {
-        appendLog("PUSHOVER ERROR | request process did not start");
+        appendLog("PUSHOVER ERROR | detached request worker could not start | errno=" +
+                  std::to_string(waited < 0 ? errno : 0));
     }
 }
 
