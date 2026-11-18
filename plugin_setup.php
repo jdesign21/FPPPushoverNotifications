@@ -5,7 +5,7 @@ if (!isset($pluginName) || $pluginName !== 'FPPPushoverNotifications') {
     return;
 }
 
-$pluginVersion = '0.2.1';
+$pluginVersion = '0.2.2';
 $settingKeys = array('RemoteFalconEnabled', 'ShowStartEnabled', 'ShowEndEnabled', 'MainShowPlaylist');
 $defaults = array(
     'RemoteFalconEnabled' => '1',
