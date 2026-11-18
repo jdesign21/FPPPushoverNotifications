@@ -5,13 +5,15 @@ if (!isset($pluginName) || $pluginName !== 'FPPPushoverNotifications') {
     return;
 }
 
-$pluginVersion = '0.2.5';
-$settingKeys = array('RemoteFalconEnabled', 'ShowStartEnabled', 'ShowEndEnabled', 'MainShowPlaylist');
+$pluginVersion = '0.3.0';
+$settingKeys = array('RemoteFalconEnabled', 'ShowStartEnabled', 'ShowEndEnabled', 'MainShowPlaylist', 'PushoverUserKey', 'PushoverApiToken');
 $defaults = array(
     'RemoteFalconEnabled' => '1',
     'ShowStartEnabled' => '1',
     'ShowEndEnabled' => '1',
-    'MainShowPlaylist' => 'Light Show'
+    'MainShowPlaylist' => 'Light Show',
+    'PushoverUserKey' => '',
+    'PushoverApiToken' => ''
 );
 $saveMessage = '';
 $saveError = '';
@@ -22,6 +24,66 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['clearNotificationHist
         $saveMessage = 'Notification history cleared.';
     } else {
         $saveError = 'Could not clear notification history. Check the FPP log directory permissions.';
+    }
+} elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['testPushoverNotification'])) {
+    $userKey = (string)ReadSettingFromFile('PushoverUserKey', $pluginName);
+    $apiToken = (string)ReadSettingFromFile('PushoverApiToken', $pluginName);
+    if ($userKey === '' || $apiToken === '') {
+        $saveError = 'Enter and save your Pushover User Key and API Token before sending a test.';
+    } elseif (!function_exists('curl_init')) {
+        $saveError = 'PHP cURL is not available on this FPP installation, so the test notification cannot be sent.';
+    } else {
+        $curl = curl_init('https://api.pushover.net/1/messages.json');
+        curl_setopt_array($curl, array(
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => http_build_query(array(
+                'token' => $apiToken,
+                'user' => $userKey,
+                'title' => 'FPP Pushover Notifications',
+                'message' => 'Test notification received from your FPP player.',
+                'priority' => 0
+            )),
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_CONNECTTIMEOUT => 10,
+            CURLOPT_TIMEOUT => 20,
+            CURLOPT_SSL_VERIFYPEER => true,
+            CURLOPT_SSL_VERIFYHOST => 2
+        ));
+        $responseBody = curl_exec($curl);
+        $curlError = curl_error($curl);
+        $httpCode = (int)curl_getinfo($curl, CURLINFO_HTTP_CODE);
+        curl_close($curl);
+        $response = is_string($responseBody) ? json_decode($responseBody, true) : null;
+        if ($responseBody !== false && $httpCode >= 200 && $httpCode < 300 &&
+            is_array($response) && isset($response['status']) && (int)$response['status'] === 1) {
+            $saveMessage = 'Test notification sent. Check your phone.';
+        } else {
+            $apiErrors = (is_array($response) && isset($response['errors']) && is_array($response['errors']))
+                ? implode(' ', $response['errors']) : '';
+            $reason = ($apiErrors !== '') ? $apiErrors : (($curlError !== '') ? $curlError : 'Pushover returned HTTP ' . $httpCode . '.');
+            $saveError = 'Test notification failed: ' . $reason;
+        }
+    }
+} elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['savePushoverSettings'])) {
+    $userKey = isset($_POST['PushoverUserKey']) ? trim($_POST['PushoverUserKey']) : '';
+    $apiToken = isset($_POST['PushoverApiToken']) ? trim($_POST['PushoverApiToken']) : '';
+    $currentUserKey = (string)ReadSettingFromFile('PushoverUserKey', $pluginName);
+    $currentApiToken = (string)ReadSettingFromFile('PushoverApiToken', $pluginName);
+    if (strlen($userKey) > 128 || strlen($apiToken) > 128 ||
+        preg_match('/\\s/', $userKey) || preg_match('/\\s/', $apiToken)) {
+        $saveError = 'The Pushover keys appear invalid. Check for spaces and try again.';
+    } elseif ($userKey === '' && $apiToken === '' && $currentUserKey === '' && $currentApiToken === '') {
+        $saveError = 'Enter your Pushover User Key and API Token.';
+    } else {
+        if ($userKey !== '') WriteSettingToFile('PushoverUserKey', $userKey, $pluginName);
+        if ($apiToken !== '') WriteSettingToFile('PushoverApiToken', $apiToken, $pluginName);
+        $savedUserKey = (string)ReadSettingFromFile('PushoverUserKey', $pluginName);
+        $savedApiToken = (string)ReadSettingFromFile('PushoverApiToken', $pluginName);
+        if ($savedUserKey !== '' && $savedApiToken !== '') {
+            $saveMessage = 'Pushover credentials saved. Use Send Test Notification to verify them.';
+        } else {
+            $saveError = 'FPP could not verify both Pushover credentials were saved. Check plugin configuration file permissions.';
+        }
     }
 } elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['saveNotificationSettings'])) {
     $values = array(
@@ -138,6 +200,13 @@ function pushover_event_detail($line) {
 #pushover-page .po-input { width:100%; max-width:430px; padding:10px 12px; border:1px solid #cbd4df; border-radius:7px; font-size:14px; }
 #pushover-page .po-save { margin-top:18px; padding:10px 18px; border:0; border-radius:7px; background:#2878c7; color:#fff; font-weight:700; cursor:pointer; }
 #pushover-page .po-save:hover { background:#1d639f; }
+#pushover-page .po-secret-note { margin:0 0 14px; color:var(--po-muted); font-size:12px; line-height:1.5; }
+#pushover-page .po-credential-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+#pushover-page .po-field label { display:block; margin-bottom:6px; font-size:13px; font-weight:700; }
+#pushover-page .po-field input { max-width:none; }
+#pushover-page .po-actions { display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-top:16px; }
+#pushover-page .po-test { margin-top:18px; padding:10px 16px; border:1px solid #238653; border-radius:7px; color:#187447; background:#fff; font-weight:700; cursor:pointer; }
+#pushover-page .po-test:hover { background:#e8f5ee; }
 #pushover-page .po-alert { margin:12px 0; padding:11px 14px; border-radius:7px; font-size:13px; }
 #pushover-page .po-success { background:#e8f5ee; color:#187447; }
 #pushover-page .po-error { background:#fdecec; color:#a83232; }
@@ -155,7 +224,7 @@ function pushover_event_detail($line) {
 #pushover-page .po-empty { padding:24px; color:var(--po-muted); font-size:13px; text-align:center; }
 #pushover-page .po-footer { margin-top:12px; color:var(--po-muted); font-size:12px; }
 @media(max-width:850px) { #pushover-page .po-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
-@media(max-width:560px) { #pushover-page .po-hero { align-items:flex-start; flex-direction:column; padding:20px; } #pushover-page .po-grid { grid-template-columns:1fr; } #pushover-page .po-setting { gap:12px; } }
+@media(max-width:560px) { #pushover-page .po-credential-grid { grid-template-columns:1fr; } #pushover-page .po-hero { align-items:flex-start; flex-direction:column; padding:20px; } #pushover-page .po-grid { grid-template-columns:1fr; } #pushover-page .po-setting { gap:12px; } }
 </style>
 
 <div id="pushover-page">
@@ -200,6 +269,29 @@ function pushover_event_detail($line) {
         </form>
     </div>
 
+    <div class="po-section">Pushover Account</div>
+    <div class="po-card">
+        <p class="po-secret-note">Enter your Pushover User Key and Application API Token. Credentials are stored in this FPP plugin's local configuration file and are never displayed after saving. Leave a field blank to keep its existing value.</p>
+        <form method="post" action="" autocomplete="off">
+            <div class="po-credential-grid">
+                <div class="po-field">
+                    <label for="pushoverUserKey">Pushover User Key</label>
+                    <input class="po-input" type="password" id="pushoverUserKey" name="PushoverUserKey" maxlength="128" placeholder="<?php echo ((string)$settings['PushoverUserKey'] !== '') ? 'Saved — enter a new key to replace' : 'Enter your User Key'; ?>" autocomplete="new-password">
+                </div>
+                <div class="po-field">
+                    <label for="pushoverApiToken">Pushover API Token</label>
+                    <input class="po-input" type="password" id="pushoverApiToken" name="PushoverApiToken" maxlength="128" placeholder="<?php echo ((string)$settings['PushoverApiToken'] !== '') ? 'Saved — enter a new token to replace' : 'Enter your API Token'; ?>" autocomplete="new-password">
+                </div>
+            </div>
+            <div class="po-actions">
+                <button class="po-save" type="submit" name="savePushoverSettings" value="1">Save Pushover Credentials</button>
+            </div>
+        </form>
+        <form method="post" action="">
+            <button class="po-test" type="submit" name="testPushoverNotification" value="1">Send Test Notification</button>
+        </form>
+    </div>
+
     <div class="po-history-head">
         <div class="po-section">Notification History <span style="font-size:12px;color:var(--po-muted);font-weight:500">(<?php echo count($history); ?> shown)</span></div>
         <form method="post" action="" onsubmit="return confirm('Delete all notification history? This cannot be undone.');">
@@ -223,5 +315,5 @@ function pushover_event_detail($line) {
         <?php endforeach; endif; ?>
     </div>
 
-    <div class="po-footer">Dashboard refreshes every 10 seconds. Event tracking is local to this FPP player. Pushover delivery and credential setup are the next milestone; this version records events but does not send phone notifications yet.</div>
+    <div class="po-footer">Dashboard refreshes every 10 seconds. Event tracking is local to this FPP player. The test button verifies Pushover connectivity; automatic event notifications are the next milestone.</div>
 </div>
