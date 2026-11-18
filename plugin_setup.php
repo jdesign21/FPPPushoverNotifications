@@ -5,21 +5,25 @@ if (!isset($pluginName) || $pluginName !== 'FPPPushoverNotifications') {
     return;
 }
 
-$pluginVersion = '0.1.1';
+$pluginVersion = '0.1.2';
 $logFile = rtrim($logDirectory, '/') . '/plugin-FPPPushoverNotifications.log';
 $logExists = is_file($logFile);
 $logLines = array();
 $lastEvent = null;
+$lastMediaEvent = null;
 
 if ($logExists && is_readable($logFile)) {
     $allLines = @file($logFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
     if (is_array($allLines)) {
         $logLines = array_slice($allLines, -100);
         for ($i = count($allLines) - 1; $i >= 0; $i--) {
-            if (strpos($allLines[$i], 'PLAYLIST START') !== false) {
-                $lastEvent = $allLines[$i];
-                break;
+            if ($lastMediaEvent === null && strpos($allLines[$i], 'MEDIA CHANGE') !== false) {
+                $lastMediaEvent = $allLines[$i];
             }
+            if ($lastEvent === null && strpos($allLines[$i], 'PLAYLIST START') !== false) {
+                $lastEvent = $allLines[$i];
+            }
+            if ($lastEvent !== null && $lastMediaEvent !== null) break;
         }
     }
 }
@@ -34,7 +38,7 @@ function pushover_h($value) {
     <meta http-equiv="refresh" content="5">
 
     <h2>Plugin Configuration</h2>
-    <p>This page monitors playlist-start events detected by the native FPP plugin.</p>
+    <p>This page monitors playlist starts and media changes detected by native FPP callbacks.</p>
     <div class="fppTableWrapper fppTableWrapperAsTable">
         <div class="fppTableContents">
             <table class="fppTable" width="100%">
@@ -64,7 +68,7 @@ function pushover_h($value) {
         </div>
     </div>
 
-    <h2>Playlist Event Monitor</h2>
+    <h2>Event Monitor</h2>
     <div class="fppTableWrapper fppTableWrapperAsTable">
         <div class="fppTableContents">
             <table class="fppTable" width="100%">
@@ -76,6 +80,10 @@ function pushover_h($value) {
                     <tr class="fppTableRow">
                         <td><strong>Last Playlist Start</strong></td>
                         <td><?php echo $lastEvent !== null ? pushover_h($lastEvent) : 'No playlist-start event recorded yet.'; ?></td>
+                    </tr>
+                    <tr class="fppTableRow">
+                        <td><strong>Last Song / Media Change</strong></td>
+                        <td><?php echo $lastMediaEvent !== null ? pushover_h($lastMediaEvent) : 'No media-change event recorded yet.'; ?></td>
                     </tr>
                 </tbody>
             </table>
@@ -112,5 +120,5 @@ function pushover_h($value) {
             echo pushover_h(implode("\n", $logLines));
         }
     ?></pre>
-    <p><em>This page refreshes every five seconds. Pushover credentials and notification delivery will be added in a later milestone.</em></p>
+    <p><em>This page refreshes every five seconds. Media callback data is being captured to identify RemoteFalcon selections. Pushover delivery is not enabled in this build.</em></p>
 </div>
